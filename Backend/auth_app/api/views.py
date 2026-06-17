@@ -4,7 +4,13 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
 from auth_app.models import UserProfile
-from .serializers import RegistrationSerializer, UserProfileSerializer
+from .serializers import (
+    UserProfileSerializerList,
+    UserProfileSerializerGet,
+    UserProfileSerializerPatch,
+    RegistrationSerializer,
+)
+from .permissions import IsOwnerByUserProfile
 
 
 class UserProfileList(generics.ListCreateAPIView):
@@ -13,7 +19,7 @@ class UserProfileList(generics.ListCreateAPIView):
     can view the list of profiles."""
 
     queryset = UserProfile.objects.all()
-    serializer_class = UserProfileSerializer
+    serializer_class = UserProfileSerializerList
 
     def get_permissions(self):
         if self.request.method in permissions.SAFE_METHODS:
@@ -21,30 +27,35 @@ class UserProfileList(generics.ListCreateAPIView):
         return [permissions.IsAdminUser()]
 
 
-class UserProfileDetail(generics.RetrieveUpdateDestroyAPIView):
+class UserProfileDetail(generics.RetrieveUpdateAPIView):
     """GET: Retrieve a user profile by ID. PUT/PATCH: Update a user profile
-    (only by the owner or an admin). DELETE: Delete a user profile
-    (only by the owner or an admin).     This view allows users to view, update,
-    or delete their own profile, while admin users can manage any profile.
     Only authenticated users can access this endpoint."""
 
     queryset = UserProfile.objects.all()
-    serializer_class = UserProfileSerializer
+    # serializer_class = UserProfileSerializerGet
+    permission_classes = [IsOwnerByUserProfile]
 
-    def get_permissions(self):
-        """for GET should user authenticated"""
-        if self.request.method in permissions.SAFE_METHODS:
-            return [permissions.IsAuthenticated()]
-        return [permissions.IsAuthenticatedOrReadOnly()]
+    def get_serializer_class(self):
+        if self.request.method not in permissions.SAFE_METHODS:
+            # Logic for POST, PUT, PATCH, DELETE
+            return UserProfileSerializerPatch
+        return UserProfileSerializerGet
+        # return super().get_serializer_class()
 
-    def check_object_permissions(self, request, obj):
-        """check if the user is the owner or a admin of profile."""
-        super().check_object_permissions(request, obj)
+    # def get_permissions(self):
+    #     """for GET should user authenticated, for PATCH should owner by UserProfile"""
+    #     # if self.request.method not in permissions.SAFE_METHODS:
+    #     #     return [permissions.IsAuthenticated()]
+    #     return [IsOwnerByUserProfile]
 
-        if not request.user.is_staff and obj.user != request.user:
-            self.permission_denied(
-                request, message="Only the owner or an admin may modify this profile."
-            )
+    # def check_object_permissions(self, request, obj):
+    #     """check if the user is the owner or a admin of profile."""
+    #     super().check_object_permissions(request, obj)
+
+    #     if not request.user.is_staff and obj.user != request.user:
+    #         self.permission_denied(
+    #             request, message="Only the owner or an admin may modify this profile."
+    #         )
 
 
 class RegistrationView(generics.CreateAPIView):
