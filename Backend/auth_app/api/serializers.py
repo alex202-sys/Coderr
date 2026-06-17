@@ -6,8 +6,63 @@ from auth_app.models import UserProfile
 from rest_framework.authtoken.models import Token
 
 
-class UserProfileSerializerList(serializers.ModelSerializer):
-    pass
+class UserProfileSerializerGetListCustomer(serializers.ModelSerializer):
+    """Serializer for the list UserProfile model, filter by Customer .."""
+
+    username = serializers.CharField(source="user.username", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
+    # file = serializers.SerializerMethodField(default="")
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "user",
+            "username",
+            "first_name",
+            "last_name",
+            "file",
+            "uploaded_at",
+            "type",
+        ]
+
+    def to_representation(self, instance):
+        """'file' fix "" if Null"""
+        data = super().to_representation(instance)
+        if data.get("file") is None:
+            data["file"] = ""
+        return data
+
+
+class UserProfileSerializerGetListBusiness(serializers.ModelSerializer):
+    """Serializer for the list UserProfile model, filter by Business .."""
+
+    username = serializers.CharField(source="user.username", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
+    # file = serializers.SerializerMethodField(default="")
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "user",
+            "username",
+            "first_name",
+            "last_name",
+            "file",
+            "location",
+            "tel",
+            "description",
+            "working_hours",
+            "type",
+        ]
+
+    def to_representation(self, instance):
+        """'file' fix "" if Null"""
+        data = super().to_representation(instance)
+        if data.get("file") is None:
+            data["file"] = ""
+        return data
 
 
 class UserProfileSerializerPatch(serializers.ModelSerializer):

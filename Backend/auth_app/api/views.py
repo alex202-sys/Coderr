@@ -5,26 +5,42 @@ from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
 from auth_app.models import UserProfile
 from .serializers import (
-    UserProfileSerializerList,
+    # UserProfileSerializerList,
     UserProfileSerializerGet,
     UserProfileSerializerPatch,
     RegistrationSerializer,
+    UserProfileSerializerGetListBusiness,
+    UserProfileSerializerGetListCustomer,
 )
 from .permissions import IsOwnerByUserProfile
 
 
-class UserProfileList(generics.ListCreateAPIView):
-    """GET: List all user profiles. POST: Create a new user profile.
-    Only admin users can create new profiles, while authenticated users
-    can view the list of profiles."""
+class UserCustomerList(generics.ListAPIView):
+    """GET: List all user profiles with type 'customer'."""
 
-    queryset = UserProfile.objects.all()
-    serializer_class = UserProfileSerializerList
+    queryset = UserProfile.objects.filter(type=UserProfile.UserType.CUSTOMER)
+    serializer_class = UserProfileSerializerGetListCustomer
 
-    def get_permissions(self):
-        if self.request.method in permissions.SAFE_METHODS:
-            return [permissions.IsAuthenticated()]
-        return [permissions.IsAdminUser()]
+
+class UserBusinessList(generics.ListAPIView):
+    """GET: List all user profiles with type 'business'."""
+
+    queryset = UserProfile.objects.filter(type=UserProfile.UserType.BUSINESS)
+    serializer_class = UserProfileSerializerGetListBusiness
+
+
+# class UserProfileList(generics.ListCreateAPIView):
+#     """GET: List all user profiles. POST: Create a new user profile.
+#     Only admin users can create new profiles, while authenticated users
+#     can view the list of profiles."""
+
+#     queryset = UserProfile.objects.all()
+#     serializer_class = UserProfileSerializerList
+
+#     def get_permissions(self):
+#         if self.request.method in permissions.SAFE_METHODS:
+#             return [permissions.IsAuthenticated()]
+#         return [permissions.IsAdminUser()]
 
 
 class UserProfileDetail(generics.RetrieveUpdateAPIView):
