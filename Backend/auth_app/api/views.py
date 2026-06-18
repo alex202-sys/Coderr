@@ -9,8 +9,8 @@ from .serializers import (
     UserProfileSerializerGet,
     UserProfileSerializerPatch,
     RegistrationSerializer,
-    UserProfileSerializerGetListBusiness,
-    UserProfileSerializerGetListCustomer,
+    UserProfileGetListBusinessSerializer,
+    UserProfileGetListCustomerSerializer,
 )
 from .permissions import IsOwnerByUserProfile
 
@@ -19,14 +19,14 @@ class UserCustomerList(generics.ListAPIView):
     """GET: List all user profiles with type 'customer'."""
 
     queryset = UserProfile.objects.filter(type=UserProfile.UserType.CUSTOMER)
-    serializer_class = UserProfileSerializerGetListCustomer
+    serializer_class = UserProfileGetListCustomerSerializer
 
 
 class UserBusinessList(generics.ListAPIView):
     """GET: List all user profiles with type 'business'."""
 
     queryset = UserProfile.objects.filter(type=UserProfile.UserType.BUSINESS)
-    serializer_class = UserProfileSerializerGetListBusiness
+    serializer_class = UserProfileGetListBusinessSerializer
 
 
 # class UserProfileList(generics.ListCreateAPIView):

@@ -6,7 +6,7 @@ from auth_app.models import UserProfile
 from rest_framework.authtoken.models import Token
 
 
-class UserProfileSerializerGetListCustomer(serializers.ModelSerializer):
+class UserProfileGetListCustomerSerializer(serializers.ModelSerializer):
     """Serializer for the list UserProfile model, filter by Customer .."""
 
     username = serializers.CharField(source="user.username", read_only=True)
@@ -34,7 +34,7 @@ class UserProfileSerializerGetListCustomer(serializers.ModelSerializer):
         return data
 
 
-class UserProfileSerializerGetListBusiness(serializers.ModelSerializer):
+class UserProfileGetListBusinessSerializer(serializers.ModelSerializer):
     """Serializer for the list UserProfile model, filter by Business .."""
 
     username = serializers.CharField(source="user.username", read_only=True)
