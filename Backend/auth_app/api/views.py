@@ -44,8 +44,9 @@ class UserBusinessList(generics.ListAPIView):
 
 
 class UserProfileDetail(generics.RetrieveUpdateAPIView):
-    """GET: Retrieve a user profile by ID. PUT/PATCH: Update a user profile
-    Only authenticated users can access this endpoint."""
+    """GET: Retrieve a user profile by ID. Only authenticated users
+    can access this endpoint.
+       PUT/PATCH: Update a user profile, only owner can access this endpoint."""
 
     queryset = UserProfile.objects.all()
     # serializer_class = UserProfileSerializerGet
