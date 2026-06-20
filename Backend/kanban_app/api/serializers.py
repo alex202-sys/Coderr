@@ -4,6 +4,9 @@ from kanban_app.models import Offer, OfferDetail
 
 
 class OfferDetailUrlSerializer(serializers.ModelSerializer):
+    """ "Serializer for listing OfferDetail objects with only ID and URL,
+    used in GET responses of OfferSerializer."""
+
     url = serializers.SerializerMethodField()
 
     class Meta:
@@ -15,6 +18,9 @@ class OfferDetailUrlSerializer(serializers.ModelSerializer):
 
 
 class OfferDetailSerializer(serializers.ModelSerializer):
+    """Serializer for creating/updating OfferDetail objects,
+    used in PUT/PATCH requests of OfferSerializer."""
+
     # für update nur probiere
     # offer_type = serializers.CharField(required=True)
 

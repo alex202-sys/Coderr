@@ -1,17 +1,27 @@
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters, status, mixins
 from rest_framework.response import Response
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Min
 from .permissions import IsBusinessUserOrReadOnly, OfferIdViewSetIsOwnerOrReadOnly
-from kanban_app.api.serializers import OfferSerializer, OfferIdSerializer
-from kanban_app.models import Offer
+from kanban_app.api.serializers import (
+    OfferSerializer,
+    OfferIdSerializer,
+    OfferDetailSerializer,
+)
+from kanban_app.models import Offer, OfferDetail
 
 # class OfferIdViewSet(viewsets.ModelViewSet):
 #     queryset = Offer.objects.all()
 #     serializer_class = OfferIdSerializer
 #     permission_classes = [OfferIdViewSetIsOwnerOrReadOnly]
 #     # Nur Ersteller des Angebotes können dies löschen.
+
+
+class OfferDetailViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    queryset = OfferDetail.objects.all()
+    serializer_class = OfferDetailSerializer
+    # permission_classes = [OfferIdViewSetIsOwnerOrReadOnly]
 
 
 class OfferCustomPagination(PageNumberPagination):

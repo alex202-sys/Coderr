@@ -1,161 +1,120 @@
-# Coderr - Backend RESTful API
+# Coderr
 
-Coderr is a robust, production-ready RESTful API built with Django and Django REST Framework (DRF). It serves as a powerful backend for a Coderr project management application. The project handles user authentication (via Token), automatic profile management...
+Coderr is a Django REST Framework backend for a marketplace-style platform with user profiles and offers (including offer tiers such as basic, standard, and premium).
 
-------
+## Tech Stack
 
-## Key Features & Architectural Highlights
+- Python
+- Django
+- Django REST Framework
+- Token Authentication (`rest_framework.authtoken`)
+- SQLite (default for local development)
 
-- 
-- **Production-Ready Configuration:** Segregated configurations utilizing environment variables (`.env`) for critical parameters like `SECRET_KEY`.
-
-------
-
-## 📁 Project Structure
-
-The project strictly follows a scalable, decoupled architecture where each application wraps its internal structural definitions (`serializers.py`, `views.py`, `urls.py`) inside an isolated `api/` directory layer.
+## Project Structure
 
 ```text
-KanMind/
-├── frontend/ # Decoupled Frontend Application
-└── backend/ # Django Backend Project Root
- ├── .env # Local Environment Variables (Git-ignored)
- ├── .env.template # Public blueprint configuration for deployment Setup
- ├── manage.py # Django execution orchestrator
- ├── db.sqlite3 # Database state
- ├── core/ # Core System Configuration Application
- │ ├── settings.py
- │ └── urls.py
- ├── auth_app/ # Custom User Administration & Profiles App
- │ ├── models.py
- │ └── api/
- │ ├── serializers.py
- │ ├── views.py
- │ └── urls.py
- └── kanban_app/ # Core Kanban Logic App (Boards, Tasks, Comments)
- ├── models.py
- └── api/
- ├── serializers.py
- ├── views.py
- └── urls.py
+Coderr/
+├── Backend/
+│   ├── auth_app/
+│   │   ├── models.py
+│   │   └── api/
+│   │       ├── serializers.py
+│   │       ├── views.py
+│   │       ├── urls.py
+│   │       └── permissions.py
+│   ├── kanban_app/
+│   │   ├── models.py
+│   │   └── api/
+│   │       ├── serializers.py
+│   │       ├── views.py
+│   │       ├── urls.py
+│   │       └── permissions.py
+│   ├── core/
+│   │   ├── settings.py
+│   │   └── urls.py
+│   ├── manage.py
+│   └── requirements.txt
+└── Frontend/
 ```
 
-## Data Models Relationship
+## Features
 
-The system builds its workspace graphs around the core native Django `User` model, extended through operational entity tables.
+- User registration and login with auth tokens
+- Customer and business profile listing
+- Profile detail retrieval and owner-only profile updates
+- Offer CRUD with nested offer details
+- Filtering, search, sorting, and pagination for offers
+- Media file support (`/media/`)
 
-### 1. UserProfile Model (`auth_app`)
+## Local Setup (Windows)
 
-Extends the database user structure with custom regional meta-information.
-
-- **user:** `OneToOneField` linking strictly to the native Django Auth User.
-- **bio:** `TextField` for profile summaries (optional).
-- **location:** `CharField` for regional location settings (optional).
-- **fullname (Property):** Dynamically calculated string interpolation linking user first/last names.
-
-### 2. Board Model (`kanban_app`)
-
-Represents specific workspaces.
-
-- **title:** `CharField` storing workspace naming configurations.
-- **owner:** `ForeignKey` linking the workspace manager (cascades to `SET_NULL`).
-- **member:** `ManyToManyField` tracking authorized participants allowed to access board instances.
-
-### 3. Task Model (`kanban_app`)
-
-Operational working entities mapped into Kanban status pipelines.
-
-- **title / description:** Text variables mapping task core metrics.
-- **status:** `CharField` utilizing state machines via `TaskStatus.choices` (`to-do`, `in-progress`, `review`, `done`).
-- **priority:** `CharField` mapping operational urgency via `TaskPriority.choices` (`low`, `medium`, `high`).
-- **due_date:** `DateField` handling milestone deadlines.
-- **assignee / reviewer / creator:** Independent relational fields pointing explicitly to distinct `User` records.
-
-### 4. Comment Model (`kanban_app`)
-
-- **task:** `ForeignKey` linking to the parent task record.
-- **author:** `ForeignKey` tracking comment writers.
-- **content:** `TextField` keeping conversational thread tracking logs.
-
-## API Endpoint Specifications
-
-All data inputs and outputs use `application/json` payloads.
-
-### Authentication Endpoints
-
-- **`POST /api/registration/`** - Registers a new user account, auto-generates their `UserProfile`, and returns an immediate authorization token block.
-- **`POST /api/login/`** - Accepts payload data with an `email` and `password` key-set. Resolves identities and delivers security tokens.
-
-### Profile Endpoints
-
-- **`GET /api/profiles/`** - Lists all system user profiles (Requires authentication).
-- **`GET/PUT/PATCH/DELETE /api/profiles/<int:pk>/`** - Profile detail manipulation endpoint protected strictly by object-level permission configurations (Only the profile owner or system staff can mutate data).
-
-### Kanban Operations
-
-- **`GET/POST /api/boards/`** - Creates or lists workspaces the current context user owns or is registered to as a workspace participant.
-- **`GET/PUT/PATCH/DELETE /api/tasks/`** - Task engine interface. Restricts operational modifications to authorized project members.
-- **`POST /api/tasks/<int:pk>/comments/`** - Conversation streaming endpoint attached to specific task lines.
-
-## Setup & Local Installation
-
-Follow these steps to run this project locally:
-
-1. **Clone the repository:**
-
-   Bash
-
-   ```
-   cd KanMind # Ordner vom Hauptproekt
-   git clone https://github.com/alex202-sys/KanMind.git
-   cd backend
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/alex202-sys/Coderr.git
+   cd Coderr\Backend
    ```
 
-2. **Initialize the Python Virtual Environment:**
-
-   Bash
-
-   ```
+2. Create and activate a virtual environment:
+   ```bash
    python -m venv .venv
-   # Activate on Windows:
    .venv\Scripts\activate
    ```
 
-3. **Install dependencies:**
-
-   Bash
-
-   ```
+3. Install dependencies:
+   ```bash
    pip install -r requirements.txt
    ```
 
-4. **Environment Variables Configuration:** Copy the public configuration template and configure your local settings:
-
-   Bash
-
-   ```
-   cp .env.template .env
+4. Create `.env` in `Backend\`:
+   ```env
+   SECRET_KEY=your-django-secret-key
    ```
 
-   Open your newly created `.env` file and define your development variables cleanly without quotes or extra spacing:
-
-   Plaintext
-
-   ```
-   SECRET_KEY=your-super-secure-local-django-secret-key
-   ```
-
-5. **Execute database structural migrations & start the development engine:**
-
-   Bash
-
-   ```
+5. Run migrations and start the server:
+   ```bash
    python manage.py migrate
    python manage.py runserver
    ```
 
-   The local service endpoint will spawn cleanly on http://127.0.0.1:8000/api/
+API base URL:
+`http://127.0.0.1:8000/api/`
 
+## Authentication
+
+Use token auth in requests:
+
+```http
+Authorization: Token <your_token>
+```
+
+## Main API Endpoints
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| POST | `/api/registration/` | Register a new user |
+| POST | `/api/login/` | Login and get token |
+| GET | `/api/profiles/customer/` | List customer profiles |
+| GET | `/api/profiles/business/` | List business profiles |
+| GET | `/api/profile/<id>/` | Get profile detail |
+| PATCH/PUT | `/api/profile/<id>/` | Update own profile |
+| GET | `/api/offers/` | List offers |
+| POST | `/api/offers/` | Create offer (business users) |
+| GET | `/api/offers/<id>/` | Get offer detail |
+| PATCH/PUT/DELETE | `/api/offers/<id>/` | Update/Delete own offer |
+
+## Offer List Query Parameters
+
+- `creator_id`
+- `min_price`
+- `max_delivery_time`
+- `ordering` (`min_price`, `-min_price`, `updated_at`, `-updated_at`)
+- `search` (title/description)
+- `page_size`
+
+## Notes
+
+- Default global API permission is `IsAuthenticated`, with endpoint-specific overrides where needed.
+- Offer creation requires exactly 3 detail items.
 
 
 
