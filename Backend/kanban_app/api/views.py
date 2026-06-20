@@ -90,9 +90,6 @@ class OfferViewSet(viewsets.ModelViewSet):
             # 3. Filtern nach maximaler Lieferzeit (?max_delivery_time=...)
             max_delivery_time = params.get("max_delivery_time")
             if max_delivery_time:
-                # queryset = queryset.filter(
-                #     details__delivery_time_in_days__lte=max_delivery_time
-                # ).distinct()
                 queryset = queryset.filter(
                     details__delivery_time_in_days__lte=max_delivery_time
                 )

@@ -185,6 +185,8 @@ class OfferSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
+        """Generate an offer based on the request data, including
+        the creation of multiple 'Model OfferDetail' objects."""
         details_data = validated_data.pop("details")
 
         request = self.context.get("request")
