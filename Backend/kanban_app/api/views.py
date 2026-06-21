@@ -3,13 +3,18 @@ from rest_framework.response import Response
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Min
-from .permissions import IsBusinessUserOrReadOnly, OfferIdViewSetIsOwnerOrReadOnly
+from .permissions import (
+    IsBusinessUserOrReadOnly,
+    OfferIdViewSetIsOwnerOrReadOnly,
+    IsUserCustomerOrBusinnesOrAdmin,
+)
 from kanban_app.api.serializers import (
     OfferSerializer,
     OfferIdSerializer,
     OfferDetailSerializer,
+    OrdersOfferSerializer,
 )
-from kanban_app.models import Offer, OfferDetail
+from kanban_app.models import Offer, OfferDetail, Order
 
 # class OfferIdViewSet(viewsets.ModelViewSet):
 #     queryset = Offer.objects.all()
@@ -129,3 +134,9 @@ class OfferViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OrdersOfferViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrdersOfferSerializer
+    permission_classes = [IsUserCustomerOrBusinnesOrAdmin]

@@ -2,7 +2,7 @@ from django.urls import path, include
 
 # from rest_framework import routers
 from rest_framework.routers import DefaultRouter
-from .views import OfferViewSet, OfferDetailViewSet
+from .views import OfferViewSet, OfferDetailViewSet, OrdersOfferViewSet
 
 # from kanban_app.api.views import BoardListView, TasksView, EmailCheckView
 
@@ -15,6 +15,7 @@ from .views import OfferViewSet, OfferDetailViewSet
 router = DefaultRouter()
 router.register(r"offers", OfferViewSet, basename="offer")
 router.register(r"offerdetails", OfferDetailViewSet, basename="offerdetail")
+router.register(r"orders", OrdersOfferViewSet, basename="order")
 
 
 urlpatterns = [

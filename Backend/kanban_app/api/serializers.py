@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from kanban_app.models import Offer, OfferDetail
+from kanban_app.models import Offer, OfferDetail, Order
 
 
 class OfferDetailUrlSerializer(serializers.ModelSerializer):
@@ -231,3 +231,75 @@ class OfferSerializer(serializers.ModelSerializer):
         data.pop("created_at", None)
         data.pop("updated_at", None)
         return data
+
+
+class OrdersOfferSerializer(serializers.ModelSerializer):
+
+    offer_detail_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "customer_user",
+            "business_user",
+            "title",
+            "revisions",
+            "delivery_time_in_days",
+            "price",
+            "features",
+            "offer_type",
+            "status",
+            "created_at",
+            "updated_at",
+            "offer_detail_id",
+        ]
+        # write_only_fields = ["offer_detail_id"]
+        read_only_fields = [
+            "title",
+            "revisions",
+            "delivery_time_in_days",
+            "price",
+            "features",
+            "offer_type",
+            "customer_user",
+            "business_user",
+            # "created_at",
+            # "updated_at",
+        ]
+
+    # def get_offer_detail_id(self, obj):
+    #     if obj.offer_detail:
+    #         return obj.offer_detail.id
+    #     return None
+
+    def create(self, validated_data):
+        # offer_detail_id = self.context["request"].data.get("offer_detail_id")
+        offer_detail_id = validated_data.pop("offer_detail_id")
+        try:
+            offerdetail = OfferDetail.objects.get(id=offer_detail_id)
+
+        except OfferDetail.DoesNotExist:
+            raise serializers.ValidationError(
+                "OfferDetail with the given ID does not exist."
+            )
+
+        request = self.context.get("request")
+        validated_data["offer_detail"] = offerdetail
+        if request and request.user:
+            validated_data["customer_user"] = request.user
+        validated_data["business_user"] = offerdetail.offer.user
+        validated_data["title"] = offerdetail.title
+        validated_data["revisions"] = offerdetail.revisions
+        validated_data["delivery_time_in_days"] = offerdetail.delivery_time_in_days
+        validated_data["price"] = offerdetail.price
+        validated_data["features"] = offerdetail.features
+        validated_data["offer_type"] = offerdetail.offer_type
+        # validated_data["status"] = Order.OrderStatus.in_progress
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        """Prevent updates to offer_detail and user fields"""
+        if "status" in validated_data:
+            instance.status = validated_data.pop("status", None)
+        return super().update(instance, validated_data)
