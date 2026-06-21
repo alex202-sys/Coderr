@@ -2,6 +2,9 @@ from rest_framework import viewsets, filters, status, mixins
 from rest_framework.response import Response
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.decorators import action
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 from django.db.models import Min
 from .permissions import (
     IsBusinessUserOrReadOnly,
@@ -12,6 +15,7 @@ from kanban_app.api.serializers import (
     OfferSerializer,
     OfferIdSerializer,
     OfferDetailSerializer,
+    OrdersCountSerializer,
     OrdersOfferSerializer,
 )
 from kanban_app.models import Offer, OfferDetail, Order
@@ -140,3 +144,42 @@ class OrdersOfferViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrdersOfferSerializer
     permission_classes = [IsUserCustomerOrBusinnesOrAdmin]
+
+
+class OrdersCountViewSet(viewsets.ViewSet):
+    # class OrdersCountViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    # queryset = User.objects.all()
+    # serializer_class = OrdersCountSerializer
+
+    def retrieve(self, request, pk=None):
+        business_user = get_object_or_404(User, id=pk)  # Import aus django.shortcuts
+        status_filter = "in_progress"
+        serializer = OrdersCountSerializer(
+            business_user, context={"status_filter": status_filter}
+        )  # User als Objekt übergeben
+        print("OrdersCountViewSet get_count serializer.data: ", serializer.data)
+        return Response(serializer.data)
+
+    # def retrieve(self, request, pk=None, *args, **kwargs):
+    # user = request.user
+    # print("OrdersCountViewSet list user: ", user)
+    # filtering_user = get_object_or_404(User, pk=pk)
+    # print("OrdersCountViewSet list business_user_id: ", filtering_user.id)
+    # serializer = OrdersCountSerializer(filtering_user)
+    # return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # business_user_id
+    # if not (user and user.is_authenticated):
+    #     return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # if getattr(user, "profile", None) and user.profile.type == "business":
+    #     count = Order.objects.filter(business_user=user).count()
+    # elif getattr(user, "profile", None) and user.profile.type == "customer":
+    #     count = Order.objects.filter(customer_user=user).count()
+    # else:
+    #     return Response(
+    #         {"detail": "User does not have a valid profile type."},
+    #         status=status.HTTP_400_BAD_REQUEST,
+    #     )
+
+    # return Response({"order_count": count})

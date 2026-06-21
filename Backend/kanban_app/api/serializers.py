@@ -60,10 +60,9 @@ class OfferIdSerializer(serializers.ModelSerializer):
         # read_only_fields = ["offer"]
 
     def __init__(self, *args, **kwargs):
-        """Switches the "details" field list from
-        OfferDetailUrlSerializer
-        to
-        OfferDetailSerializer
+        """Switches the "details" field list
+        from Sub-serializer       OfferDetailUrlSerializer
+        to Sub-serializer         OfferDetailSerializer
         for PUT/PATCH methods."""
         super().__init__(*args, **kwargs)
         request = self.context.get("request")
@@ -303,3 +302,13 @@ class OrdersOfferSerializer(serializers.ModelSerializer):
         if "status" in validated_data:
             instance.status = validated_data.pop("status", None)
         return super().update(instance, validated_data)
+
+
+class OrdersCountSerializer(serializers.Serializer):
+    """The number of active orders (status: in_progress or completed) for the business user"""
+
+    order_count = serializers.SerializerMethodField(read_only=True, default=0)
+
+    def get_order_count(self, obj):
+        status_filter = self.context.get("status_filter", None)
+        return Order.objects.filter(business_user=obj, status=status_filter).count()
