@@ -5,6 +5,9 @@ from kanban_app.models import Review
 
 
 class OfferIdViewSetIsOwnerOrReadOnly(BasePermission):
+    """Only the creator of an offer can delete it.
+    GET is allowed for all users."""
+
     def has_permission(self, request, view):
         if not (request.user and request.user.is_authenticated):
             return False
@@ -83,9 +86,9 @@ class IsOwnerCustomerOrReadOnly(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        print(
-            "IsOwnerCustomerOrReadOnly has_permission request.method: ", request.method
-        )
+        """POST only user with type customer allow to create reviews for business user.
+        GET  only authenticated users are allowed to read reviews."""
+
         if not (request.user and request.user.is_authenticated):
             return False
 
@@ -112,36 +115,12 @@ class IsOwnerCustomerOrReadOnly(permissions.BasePermission):
         return True
 
     def has_object_permission(self, request, view, obj):
-        print(
-            "IsOwnerCustomerOrReadOnly has_object_permission request.method: ",
-            request.method,
-        )
+        """GET only authenticated users are allowed to read reviews.
+        PATCH/DELETE only owner by review allow to update or delete
+        reviews they have created."""
         if request.method in permissions.SAFE_METHODS:
             return True
         elif request.method in ["PATCH", "DELETE"]:
             return obj.reviewer == request.user
 
         return False
-        # elif request.method == "POST":
-        #     print("IsOwnerCustomerOrReadOnly has_object_permission POST")
-
-        #     if (
-        #         getattr(request.user, "profile", None)
-        #         and request.user.profile.type == "customer"
-        #     ):
-        #         reviewer = request.user
-        #         business_user_id = request.data.get("business_user")
-        #         print(
-        #             "IsOwnerCustomerOrReadOnly has_object_permission POST reviewer: ",
-        #             reviewer,
-        #         )
-        #         print(
-        #             "IsOwnerCustomerOrReadOnly has_object_permission POST business_user: ",
-        #             business_user_id,
-        #         )
-        #         if Review.objects.filter(
-        #             business_user=obj.business_user_id, reviewer=request.user
-        #         ).exists():
-        #             raise PermissionDenied(
-        #                 detail="403: Forbidden. A user can submit only one review per business profile.",
-        #             )
