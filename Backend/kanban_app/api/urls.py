@@ -8,6 +8,7 @@ from .views import (
     OrdersOfferViewSet,
     OrdersCountViewSet,
     OrdersCompletedCountViewSet,
+    ReviewViewSet,
 )
 
 # from kanban_app.api.views import BoardListView, TasksView, EmailCheckView
@@ -28,7 +29,7 @@ router.register(
     OrdersCompletedCountViewSet,
     basename="completed-order-count",
 )
-
+router.register(r"reviews", ReviewViewSet, basename="review")
 
 urlpatterns = [
     path("", include(router.urls)),

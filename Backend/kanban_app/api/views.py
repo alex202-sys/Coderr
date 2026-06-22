@@ -10,6 +10,7 @@ from .permissions import (
     IsBusinessUserOrReadOnly,
     OfferIdViewSetIsOwnerOrReadOnly,
     IsUserCustomerOrBusinnesOrAdmin,
+    IsOwnerCustomerOrReadOnly,
 )
 from kanban_app.api.serializers import (
     OfferSerializer,
@@ -17,8 +18,11 @@ from kanban_app.api.serializers import (
     OfferDetailSerializer,
     OrdersCountSerializer,
     OrdersOfferSerializer,
+    ReviewSerializer,
 )
-from kanban_app.models import Offer, OfferDetail, Order
+from kanban_app.models import Offer, OfferDetail, Order, Review
+
+# from Backend.kanban_app.api import permissions
 
 # class OfferIdViewSet(viewsets.ModelViewSet):
 #     queryset = Offer.objects.all()
@@ -168,3 +172,54 @@ class OrdersCompletedCountViewSet(viewsets.ViewSet):
             "OrdersCompletedCountViewSet get_count serializer.data: ", serializer.data
         )
         return Response(serializer.data)
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [IsOwnerCustomerOrReadOnly]
+
+    # Filter- und Sortierungs-Backends aktivieren
+    # filter_backends = [DjangoFilterBackend, OrderingFilter]
+    # filterset_fields = ["business_user_id", "reviewer_id"]
+    ordering_fields = ["updated_at", "rating"]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        print("ReviewViewSet perform_create user: ", user)
+        print("ReviewViewSet self.methodes: ", self.request.method)
+        # Prüfung auf Kundenprofil (Hier ggf. an deine eigene User/Profil-Logik anpassen)
+        # Beispiel: Wenn du ein Boolean-Feld oder ein Profil-Modell besitzt:
+        # if not hasattr(user, 'customer_profile'):
+        #     raise PermissionDenied({"detail": "Nur Benutzer mit einem Kundenprofil dürfen Bewertungen erstellen."})
+
+        # Speichert den aktuell eingeloggten Benutzer automatisch als Ersteller
+        self.get_serializer_context()[
+            "request"
+        ] = self.request  # Kontext für den Serializer setzen
+        serializer.save(reviewer=user)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.action == "list":
+            # Optional: Filtere Bewertungen basierend auf Query-Parametern (z.B. business_user_id)
+            # business_user_id = self.request.query_params.get("business_user_id")
+            params = self.request.query_params
+            business_user_id = params.get("business_user_id")
+            if business_user_id:
+                queryset = queryset.filter(business_user_id=business_user_id)
+            reviewer_id = params.get("reviewer_id")
+            if reviewer_id:
+                queryset = queryset.filter(reviewer_id=reviewer_id)
+
+            ordering = params.get("ordering")
+            if ordering == "updated_at":
+                queryset = queryset.order_by("updated_at")
+            elif ordering == "-updated_at":
+                queryset = queryset.order_by("-updated_at")
+            elif ordering == "rating":
+                queryset = queryset.order_by("rating")
+            elif ordering == "-rating":
+                queryset = queryset.order_by("-rating")
+
+        return queryset

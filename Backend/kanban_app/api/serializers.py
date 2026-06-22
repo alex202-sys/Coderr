@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from kanban_app.models import Offer, OfferDetail, Order
+from kanban_app.models import Offer, OfferDetail, Order, Review
 
 
 class OfferDetailUrlSerializer(serializers.ModelSerializer):
@@ -312,3 +312,37 @@ class OrdersCountSerializer(serializers.Serializer):
     def get_order_count(self, obj):
         status_filter = self.context.get("status_filter", None)
         return Order.objects.filter(business_user=obj, status=status_filter).count()
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    reviewer = serializers.ReadOnlyField(source="reviewer.id")
+
+    class Meta:
+        model = Review
+        fields = [
+            "id",
+            "business_user",
+            "reviewer",
+            "rating",
+            "description",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at", "reviewer"]
+
+    # def validate(self, attrs):
+    #     request = self.context.get("request")
+    #     if request and request.method == "POST":
+    #         reviewer = request.user
+    #         business_user = attrs.get("business_user")
+
+    #         # Validierung: Ein Benutzer kann pro Geschäftsprofil nur eine Bewertung abgeben
+    #         if Review.objects.filter(
+    #             business_user=business_user, reviewer=reviewer
+    #         ).exists():
+    #             raise serializers.ValidationError(
+    #                 {
+    #                     "detail": "You have already submitted a review for this business user."
+    #                 }
+    #             )
+    #     return attrs
