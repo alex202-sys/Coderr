@@ -1,3 +1,4 @@
+from django.contrib.auth import models
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from kanban_app.models import Offer, OfferDetail, Order, Review
@@ -346,3 +347,38 @@ class ReviewSerializer(serializers.ModelSerializer):
     #                 }
     #             )
     #     return attrs
+
+
+class BaseInfoSerializer(serializers.Serializer):
+    """Serializer for the base info endpoint, providing aggregated data about the platform.
+     This includes:
+    - Total number of reviews across the platform.
+    - Average rating across all reviews.
+    - Total number of business profiles registered on the platform.
+    - Total number of offers available on the platform."""
+
+    review_count = serializers.SerializerMethodField(read_only=True, default=0)
+    average_rating = serializers.SerializerMethodField(read_only=True, default=0)
+    business_profile_count = serializers.SerializerMethodField(
+        read_only=True, default=0
+    )
+    offer_count = serializers.SerializerMethodField(read_only=True, default=0)
+
+    def get_review_count(self, obj):
+        print("BaseInfoSerializer get_review_count called")  # Debug-Ausgabe
+        count = Review.objects.count()
+        return count
+
+    def get_average_rating(self, obj):
+        reviews = Review.objects.all()
+        if reviews.exists():
+            rätings = reviews.values_list("rating", flat=True)
+            average = sum(rätings) / len(rätings) if rätings else 0
+            return round(average, 1)
+        return 0
+
+    def get_business_profile_count(self, obj):
+        return User.objects.filter(profile__type="business").count()
+
+    def get_offer_count(self, obj):
+        return Offer.objects.count()

@@ -8,6 +8,7 @@ from .views import (
     OrdersOfferViewSet,
     OrdersCountViewSet,
     OrdersCompletedCountViewSet,
+    BaseInfoViewSet,
     ReviewViewSet,
 )
 
@@ -30,6 +31,7 @@ router.register(
     basename="completed-order-count",
 )
 router.register(r"reviews", ReviewViewSet, basename="review")
+router.register(r"base-info", BaseInfoViewSet, basename="base-info")
 
 urlpatterns = [
     path("", include(router.urls)),

@@ -1,8 +1,9 @@
 from rest_framework import viewsets, filters, status, mixins
 from rest_framework.response import Response
-from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.decorators import action
+
+# from rest_framework.decorators import action
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.db.models import Min
@@ -13,6 +14,7 @@ from .permissions import (
     IsOwnerCustomerOrReadOnly,
 )
 from kanban_app.api.serializers import (
+    BaseInfoSerializer,
     OfferSerializer,
     OfferIdSerializer,
     OfferDetailSerializer,
@@ -22,19 +24,10 @@ from kanban_app.api.serializers import (
 )
 from kanban_app.models import Offer, OfferDetail, Order, Review
 
-# from Backend.kanban_app.api import permissions
-
-# class OfferIdViewSet(viewsets.ModelViewSet):
-#     queryset = Offer.objects.all()
-#     serializer_class = OfferIdSerializer
-#     permission_classes = [OfferIdViewSetIsOwnerOrReadOnly]
-#     # Nur Ersteller des Angebotes können dies löschen.
-
 
 class OfferDetailViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = OfferDetail.objects.all()
     serializer_class = OfferDetailSerializer
-    # permission_classes = [OfferIdViewSetIsOwnerOrReadOnly]
 
 
 class OfferCustomPagination(PageNumberPagination):
@@ -50,17 +43,14 @@ class OfferViewSet(viewsets.ModelViewSet):
         Only users of type 'business' are allowed to create offers.
     """
 
-    # fetches all offers and linked user profiles and details (OfferDetail)
     queryset = (
         Offer.objects.all()
         .prefetch_related("details", "user")
         .select_related("user__profile")
     )
-    # serializer_class = OfferSerializer
-    # permission_classes = [IsBusinessUserOrReadOnly]
+
     pagination_class = OfferCustomPagination
 
-    # Nur noch die Standard-Filter für die Suche nutzen
     filter_backends = [filters.SearchFilter]
     search_fields = ["title", "description"]
 
@@ -156,7 +146,7 @@ class OrdersCountViewSet(viewsets.ViewSet):
         status_filter = "in_progress"
         serializer = OrdersCountSerializer(
             business_user, context={"status_filter": status_filter}
-        )  # User als Objekt übergeben
+        )
         print("OrdersCountViewSet get_count serializer.data: ", serializer.data)
         return Response(serializer.data)
 
@@ -167,7 +157,7 @@ class OrdersCompletedCountViewSet(viewsets.ViewSet):
         status_filter = "completed"
         serializer = OrdersCountSerializer(
             business_user, context={"status_filter": status_filter}
-        )  # User als Objekt übergeben
+        )
         print(
             "OrdersCompletedCountViewSet get_count serializer.data: ", serializer.data
         )
@@ -175,25 +165,22 @@ class OrdersCompletedCountViewSet(viewsets.ViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing reviews on the platform.
+    - POST: Only users with a customer profile can
+    create reviews for business users.
+    - PATCH/DELETE: Only the owner of the review can update or delete it.
+    - GET: Only authenticated users are allowed to read reviews."""
+
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = [IsOwnerCustomerOrReadOnly]
 
-    # Filter- und Sortierungs-Backends aktivieren
-    # filter_backends = [DjangoFilterBackend, OrderingFilter]
-    # filterset_fields = ["business_user_id", "reviewer_id"]
     ordering_fields = ["updated_at", "rating"]
 
     def perform_create(self, serializer):
         user = self.request.user
-        print("ReviewViewSet perform_create user: ", user)
-        print("ReviewViewSet self.methodes: ", self.request.method)
-        # Prüfung auf Kundenprofil (Hier ggf. an deine eigene User/Profil-Logik anpassen)
-        # Beispiel: Wenn du ein Boolean-Feld oder ein Profil-Modell besitzt:
-        # if not hasattr(user, 'customer_profile'):
-        #     raise PermissionDenied({"detail": "Nur Benutzer mit einem Kundenprofil dürfen Bewertungen erstellen."})
 
-        # Speichert den aktuell eingeloggten Benutzer automatisch als Ersteller
         self.get_serializer_context()[
             "request"
         ] = self.request  # Kontext für den Serializer setzen
@@ -223,3 +210,18 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 queryset = queryset.order_by("-rating")
 
         return queryset
+
+
+class BaseInfoViewSet(viewsets.ViewSet):
+    """ViewSet for the platform's basic information, such as
+    the total number of reviews, average rating, number of
+    registered business profiles, and number of available offers.
+    GET - No permissions required, as this information is intended
+    to be publicly accessible.."""
+
+    permission_classes = [AllowAny]
+
+    def list(self, request):
+        serializer = BaseInfoSerializer(data={})
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
