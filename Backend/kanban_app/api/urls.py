@@ -21,8 +21,8 @@ from .views import (
 # urlpatterns = [path("", include(router.urls))]
 
 router = DefaultRouter()
-router.register(r"offers", OfferViewSet, basename="offer")
-router.register(r"offerdetails", OfferDetailViewSet, basename="offerdetail")
+router.register(r"offers", OfferViewSet, basename="offer")  # "offer"
+router.register(r"offerdetails", OfferDetailViewSet, basename="offer-detail")
 router.register(r"orders", OrdersOfferViewSet, basename="order")
 router.register(r"order-count", OrdersCountViewSet, basename="order-count")
 router.register(
