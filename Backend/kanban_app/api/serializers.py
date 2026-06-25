@@ -1,5 +1,6 @@
 from django.contrib.auth import models
 from rest_framework import serializers
+from rest_framework.exceptions import NotFound
 from django.contrib.auth.models import User
 from kanban_app.models import Offer, OfferDetail, Order, Review
 
@@ -280,9 +281,10 @@ class OrdersOfferSerializer(serializers.ModelSerializer):
             offerdetail = OfferDetail.objects.get(id=offer_detail_id)
 
         except OfferDetail.DoesNotExist:
-            raise serializers.ValidationError(
-                "OfferDetail with the given ID does not exist."
-            )
+            # raise serializers.ValidationError(
+            #     "OfferDetail with the given ID does not exist."
+            # ) # KI geändert
+            raise NotFound("OfferDetail with the given ID does not exist.")
 
         request = self.context.get("request")
         validated_data["offer_detail"] = offerdetail
@@ -306,13 +308,16 @@ class OrdersOfferSerializer(serializers.ModelSerializer):
 
 
 class OrdersCountSerializer(serializers.Serializer):
-    """The number of active orders (status: in_progress or completed) for the business user"""
+    """Serializer for counting or completed orders for a specific business user,
+    filtered by status."""
 
-    order_count = serializers.SerializerMethodField(read_only=True, default=0)
+    # order_count = serializers.SerializerMethodField(read_only=True, default=0)
+    order_count = serializers.IntegerField(read_only=True, default=0)
 
-    def get_order_count(self, obj):
-        status_filter = self.context.get("status_filter", None)
-        return Order.objects.filter(business_user=obj, status=status_filter).count()
+    # def get_order_count(self, obj):
+    #     status_filter = self.context.get("status_filter", None)
+
+    #     return Order.objects.filter(business_user=obj, status=status_filter).count()
 
 
 class ReviewSerializer(serializers.ModelSerializer):

@@ -39,42 +39,74 @@ class IsBusinessUserOrReadOnly(BasePermission):
 
 class IsUserCustomerOrBusinnesOrAdmin(BasePermission):
     """
-    - GET Only authenficierte users
-    - POST - Only authenficierte users with profil-type 'customer'
-    - PATCH - Only authenficierte users with profil-type 'business'
-    - DELETE - only staff or admin are allowed to delete orders.
-    -
+    - GET This endpoint returns only orders associated with the logged-in user,
+      either as a customer or as a business partner.
+      user either as a customer or as a business partner.
+    - POST/orders/  - now requires a customer profile
+    - PATCH /orders/{id}/ now requires the related business user
+    - DELETE /orders/{id}/ now requires admin/staff
     """
 
     def has_permission(self, request, view):
         if not (request.user and request.user.is_authenticated):
             return False
-        print(
-            "IsUserCustomerOrBusinnesOrAdmin has_permission request.method: ",
-            request.method,
-        )
-        return True
+        if request.user.is_staff or request.user.is_superuser:
+            return True
+        if request.method == "POST":
+            return (
+                getattr(request.user, "profile", None)
+                and request.user.profile.type == "customer"
+            )
+        # if request.method == "PATCH":
+        #     print(
+        #         "IsUserCustomerOrBusinnesOrAdmin has_permission PATCH request.user: ",
+        #         request.user,
+        #     )
+        #     print(
+        #         "IsUserCustomerOrBusinnesOrAdmin has_permission PATCH request.user.profile.type: ",
+        #         request.user.profile.type,
+        #     )
+        #     return (
+        #         getattr(request.user, "profile", None)
+        #         and request.user.profile.type == "business"
+        #     )
+        # if request.method == "DELETE":
+        #     return request.user.is_staff or request.user.is_superuser
+
+        if request.method in ["GET", "HEAD", "OPTIONS", "PATCH"]:
+
+            return getattr(request.user, "profile", None) and (
+                request.user.profile.type == "business"
+                or request.user.profile.type == "customer"
+            )
+
+        return False
 
     def has_object_permission(self, request, view, obj):
+        # print(
+        #     "IsUserCustomerOrBusinnesOrAdmin has_object_permission request.method: ",
+        #     request.method,
+        # )
+
         if request.method == "DELETE" and (
             request.user.is_staff or request.user.is_superuser
         ):
             return True
-        elif (
-            request.method == "PATCH"
-            and getattr(request.user, "profile", None)
-            and request.user.profile.type == "business"
-        ):
-            return True
-        elif (
-            request.method == "POST"
-            and getattr(request.user, "profile", None)
-            and request.user.profile.type == "customer"
-        ):
-            print("IsUserCustomerOrBusinnesOrAdmin has_object_permission POST")
-            return True
-        elif request.method in ["GET", "HEAD", "OPTIONS"]:
-            return True
+        elif request.method == "PATCH":
+            # print("PATCH request")
+            if (
+                getattr(request.user, "profile", None)
+                and request.user.profile.type == "business"
+            ):
+                # print(
+                #     "IsUserCustomerOrBusinnesOrAdmin getattr: ",
+                #     getattr(request.user, "profile", None),
+                # )
+                # print(
+                #     "IsUserCustomerOrBusinnesOrAdmin has_object_permission PATCH request.user.profile.type : ",
+                #     request.user.profile.type,
+                # )
+                return True
         return False
 
 

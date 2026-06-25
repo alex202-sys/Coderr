@@ -7,6 +7,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.db.models import Min
+from django.db.models import Q
 from .permissions import (
     IsBusinessUserOrReadOnly,
     OfferIdViewSetIsOwnerOrReadOnly,
@@ -139,29 +140,77 @@ class OrdersOfferViewSet(viewsets.ModelViewSet):
     serializer_class = OrdersOfferSerializer
     permission_classes = [IsUserCustomerOrBusinnesOrAdmin]
 
+    # KI falsch erstrelt
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return queryset.none()
+        if user.is_staff or user.is_superuser:
+            return queryset
+        if self.action in ["list", "retrieve"]:
+            # print("OrdersOfferViewSet get_queryset user: ", user)
+            return queryset.filter(
+                Q(customer_user=user) | Q(business_user=user)
+            ).distinct()
+        return queryset
 
-class OrdersCountViewSet(viewsets.ViewSet):
+
+class OrdersCountViewSet(viewsets.GenericViewSet):
+    # permission_classes = [IsAuthenticated]
+    queryset = Order.objects.all()
+    serializer_class = OrdersCountSerializer
+
+    def get_queryset(self, pk=None):
+        queryset = super().get_queryset()
+        pk = self.kwargs.get("pk")
+        # print("OrdersCountViewSet get_queryset pk: ", pk)
+        # print("OrdersCountViewSet get_queryset action: ", self.action)
+        if self.action == "retrieve":
+            # business_user_id = self.request.query_params.get("business_user_id")
+            business_user = get_object_or_404(
+                User, id=pk
+            )  # Import aus django.shortcuts
+            # if business_user_id:
+            # print("OrdersCountViewSet get_queryset business_user: ", business_user)
+            queryset = queryset.filter(
+                business_user=business_user, status="in_progress"
+            )
+            # print("OrdersCountViewSet get_queryset queryset: ", queryset)
+            return queryset
+        return queryset.none()
+
     def retrieve(self, request, pk=None):
-        business_user = get_object_or_404(User, id=pk)  # Import aus django.shortcuts
-        status_filter = "in_progress"
-        serializer = OrdersCountSerializer(
-            business_user, context={"status_filter": status_filter}
-        )
-        print("OrdersCountViewSet get_count serializer.data: ", serializer.data)
+        # business_user = get_object_or_404(User, id=pk)  # Import aus django.shortcuts
+        # business_user_id = self.request.query_params.get("business_user_id")
+        business_user = get_object_or_404(User, id=pk)
+        # print("OrdersCountViewSet retrieve business_user: ", business_user)
+        # print("OrdersCountViewSet retrieve business_user: ", business_user)
+        # status_filter = "in_progress"
+        queryset = self.get_queryset()
+        orders_count = queryset.count()
+        serializer = self.get_serializer({"order_count": orders_count})
+        # print("OrdersCountViewSet get_count serializer.data: ", serializer.data)
         return Response(serializer.data)
 
 
 class OrdersCompletedCountViewSet(viewsets.ViewSet):
+    # permission_classes = [IsAuthenticated]
+
     def retrieve(self, request, pk=None):
+        queryset = Order.objects.all()
         business_user = get_object_or_404(User, id=pk)  # Import aus django.shortcuts
-        status_filter = "completed"
-        serializer = OrdersCountSerializer(
-            business_user, context={"status_filter": status_filter}
+        queryset = queryset.filter(business_user=business_user, status="completed")
+        # status_filter = "completed"
+        # serializer = OrdersCountSerializer(
+        #     business_user, context={"status_filter": status_filter}
+        # )
+        data = {"order_count": queryset.count()}
+        serializer = OrdersCountSerializer(data)
+
+        return Response(
+            {"completed_order_count": serializer.data.get("order_count", 0)}
         )
-        print(
-            "OrdersCompletedCountViewSet get_count serializer.data: ", serializer.data
-        )
-        return Response(serializer.data)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
