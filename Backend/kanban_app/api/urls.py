@@ -20,6 +20,7 @@ from .views import (
 # router.register(r'email-check', EmailCheckView, basename='email-check')
 # urlpatterns = [path("", include(router.urls))]
 
+
 router = DefaultRouter()
 router.register(r"offers", OfferViewSet, basename="offer")  # "offer"
 router.register(r"offerdetails", OfferDetailViewSet, basename="offer-detail")
