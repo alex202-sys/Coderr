@@ -6,18 +6,16 @@ from rest_framework.test import APIClient
 from auth_app.models import UserProfile
 from kanban_app.models import Offer, Review
 
-
-"""
-It covers GET /api/base-info/ from the PDF with 4 passing tests:
+""" It covers GET /api/base-info/ from the PDF with 4 passing tests:
 - public access
 - xpected response keys
 - correct aggregated values
 - zero values when no data exists
 run: 
-cd "C:\Users\aleks\Desktop\DJANGO_PROJECT\Coderr\Backend"
+cd "C:/Users/aleks/Desktop/DJANGO_PROJECT/Coderr/Backend"
 .\venv\Scripts\activate
-python manage.py test kanban_app.tests.test_base_info
-"""
+python manage.py test kanban_app.tests.test_base_info """
+
 
 class BaseInfoApiTests(TestCase):
     """Tests for GET /api/base-info/."""
