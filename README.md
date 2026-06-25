@@ -1,6 +1,6 @@
 # Coderr
 
-Coderr is a Django REST Framework backend for a marketplace-style platform with user profiles and offers (including offer tiers such as basic, standard, and premium).
+Coderr is a Django REST Framework backend for a marketplace platform with authentication, profiles, offers, orders, reviews, and aggregated base information endpoints.
 
 ## Tech Stack
 
@@ -8,7 +8,7 @@ Coderr is a Django REST Framework backend for a marketplace-style platform with 
 - Django
 - Django REST Framework
 - Token Authentication (`rest_framework.authtoken`)
-- SQLite (default for local development)
+- SQLite (local default)
 
 ## Project Structure
 
@@ -24,11 +24,20 @@ Coderr/
 │   │       └── permissions.py
 │   ├── kanban_app/
 │   │   ├── models.py
-│   │   └── api/
-│   │       ├── serializers.py
-│   │       ├── views.py
-│   │       ├── urls.py
-│   │       └── permissions.py
+│   │   ├── api/
+│   │   │   ├── serializers.py
+│   │   │   ├── views.py
+│   │   │   ├── urls.py
+│   │   │   └── permissions.py
+│   │   └── tests/
+│   │       ├── __init__.py
+│   │       ├── test_offer.py
+│   │       ├── test_offer_filter.py
+│   │       ├── test_offer_patch.py
+│   │       ├── test_offer_delete.py
+│   │       ├── test_orders.py
+│   │       ├── test_review.py
+│   │       └── test_base_info.py
 │   ├── core/
 │   │   ├── settings.py
 │   │   └── urls.py
@@ -37,70 +46,16 @@ Coderr/
 └── Frontend/
 ```
 
-## Features
-
-- User registration and login with auth tokens
-- Customer and business profile listing
-- Profile detail retrieval and owner-only profile updates
-- Offer CRUD with nested offer details
-- Filtering, search, sorting, and pagination for offers
-- Media file support (`/media/`)
-
-## Local Setup (Windows)
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/alex202-sys/Coderr.git
-   cd Coderr\Backend
-   ```
-
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate
-   ```
-
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Create `.env` in `Backend\`:
-   ```env
-   SECRET_KEY=your-django-secret-key
-   ```
-
-5. Run migrations and start the server:
-   ```bash
-   python manage.py migrate
-   python manage.py runserver
-   ```
-
-API base URL:
-`http://127.0.0.1:8000/api/`
-
-## Authentication
-
-Use token auth in requests:
-
-```http
-Authorization: Token <your_token>
-```
-
 ## Main API Endpoints
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| POST | `/api/registration/` | Register a new user |
-| POST | `/api/login/` | Login and get token |
-| GET | `/api/profiles/customer/` | List customer profiles |
-| GET | `/api/profiles/business/` | List business profiles |
-| GET | `/api/profile/<id>/` | Get profile detail |
-| PATCH/PUT | `/api/profile/<id>/` | Update own profile |
-| GET | `/api/offers/` | List offers |
-| POST | `/api/offers/` | Create offer (business users) |
-| GET | `/api/offers/<id>/` | Get offer detail |
-| PATCH/PUT/DELETE | `/api/offers/<id>/` | Update/Delete own offer |
+| Area | Endpoints |
+| --- | --- |
+| Auth | `POST /api/registration/`, `POST /api/login/` |
+| Profiles | `GET /api/profiles/customer/`, `GET /api/profiles/business/`, `GET/PATCH /api/profile/<id>/` |
+| Offers | `GET/POST /api/offers/`, `GET/PATCH/DELETE /api/offers/<id>/`, `GET /api/offerdetails/<id>/` |
+| Orders | `GET/POST /api/orders/`, `PATCH/DELETE /api/orders/<id>/`, `GET /api/order-count/<business_user_id>/`, `GET /api/completed-order-count/<business_user_id>/` |
+| Reviews | `GET/POST /api/reviews/`, `PATCH/DELETE /api/reviews/<id>/` |
+| Base Info | `GET /api/base-info/` |
 
 ## Offer List Query Parameters
 
@@ -108,16 +63,58 @@ Authorization: Token <your_token>
 - `min_price`
 - `max_delivery_time`
 - `ordering` (`min_price`, `-min_price`, `updated_at`, `-updated_at`)
-- `search` (title/description)
+- `search`
 - `page_size`
 
-## Notes
+## Local Setup (Windows)
 
-- Default global API permission is `IsAuthenticated`, with endpoint-specific overrides where needed.
-- Offer creation requires exactly 3 detail items.
+```bash
+git clone https://github.com/alex202-sys/Coderr.git
+cd Coderr\Backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Create `Backend\.env`:
+
+```env
+cp .env.template .env
+```
+
+Open your newly created `.env` file and define your development variables cleanly without quotes or extra spacing:
+
+```python
+SECRET_KEY=your-django-secret-key
+```
+
+Run:
+
+```bash
+python manage.py migrate
+python manage.py runserver
+```
+
+he local service endpoint will spawn cleanly on http://127.0.0.1:8000/api/
 
 
 
+## Testing
 
+Run all tests:
 
+```bash
+python manage.py test kanban_app
+```
 
+Run specific modules:
+
+```bash
+python manage.py test kanban_app.tests.test_offer
+python manage.py test kanban_app.tests.test_offer_filter
+python manage.py test kanban_app.tests.test_offer_patch
+python manage.py test kanban_app.tests.test_offer_delete
+python manage.py test kanban_app.tests.test_orders
+python manage.py test kanban_app.tests.test_review
+python manage.py test kanban_app.tests.test_base_info
+```
