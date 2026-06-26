@@ -1,6 +1,6 @@
 from django.contrib.auth import models
 from rest_framework import serializers
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ValidationError
 from django.contrib.auth.models import User
 from kanban_app.models import Offer, OfferDetail, Order, Review
 
@@ -85,46 +85,47 @@ class OfferIdSerializer(serializers.ModelSerializer):
     #     return super().to_representation(instance)
 
     def update(self, instance, validated_data):
-        # 1. Hauptfelder des Offers aktualisieren (z.B. title, description, image)
+        """Retrieve the existing detail for this offer based on the `offer_type`
+        (i.e., fetch the object from the `OfferDetail` model via the
+        `Offer.details.offer_type` field)."""
+        # Update the main offer fields (e.g., title, description, image)
         details_data = validated_data.pop("details", None)
         instance.title = validated_data.get("title", instance.title)
         instance.save()
 
-        # 2. Verschachtelte Details aktualisieren, falls sie im Request enthalten sind
+        # Update nested details if they are included in the request.
         if details_data is not None:
             # if object OfferDetail more than 1 in request "details"
             # for detail_data in details_data:
             detail_data = details_data[0]
             offer_type = detail_data.get("offer_type")
+
             if offer_type:
                 # Suchen des existierenden Details dieses Offers anhand des offer_type
-                try:
-                    # Retrieve the object from the OfferDetail model via the
-                    #  Offer.details.offer_type field.
-                    detail_instance = instance.details.get(offer_type=offer_type)
+                # Retrieve the object from the OfferDetail model via the
+                #  Offer.details.offer_type field.
+                detail_instance = instance.details.get(offer_type=offer_type)
 
-                    # Einzelne Felder des Details aktualisieren
-                    detail_instance.title = detail_data.get(
-                        "title", detail_instance.title
-                    )
-                    detail_instance.revisions = detail_data.get(
-                        "revisions", detail_instance.revisions
-                    )
-                    detail_instance.delivery_time_in_days = detail_data.get(
-                        "delivery_time_in_days",
-                        detail_instance.delivery_time_in_days,
-                    )
-                    detail_instance.price = detail_data.get(
-                        "price", detail_instance.price
-                    )
-                    detail_instance.features = detail_data.get(
-                        "features", detail_instance.features
-                    )
-                    detail_instance.save()
+                # Update individual fields of the detail
+                detail_instance.title = detail_data.get("title", detail_instance.title)
+                detail_instance.revisions = detail_data.get(
+                    "revisions", detail_instance.revisions
+                )
+                detail_instance.delivery_time_in_days = detail_data.get(
+                    "delivery_time_in_days",
+                    detail_instance.delivery_time_in_days,
+                )
+                detail_instance.price = detail_data.get("price", detail_instance.price)
+                detail_instance.features = detail_data.get(
+                    "features", detail_instance.features
+                )
+                detail_instance.save()
 
-                except OfferDetail.DoesNotExist:
-                    # Falls der Typ wider Erwarten nicht existiert, ignorieren oder optional erstellen
-                    pass
+            else:
+                raise ValidationError(
+                    "No offer_type provided in the request data for updating OfferDetail."
+                )
+
         return instance
 
     def to_representation(self, instance):
@@ -151,6 +152,18 @@ class UserMinDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["first_name", "last_name", "username"]
+
+
+class OfferQueryParametersSerializer(serializers.Serializer):
+    # creator_id = serializers.IntegerField(required=False)
+    creator_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=False
+    )
+    min_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=False
+    )
+    max_delivery_time = serializers.IntegerField(required=False)
+    ordering = serializers.CharField(required=False)
 
 
 class OfferSerializer(serializers.ModelSerializer):

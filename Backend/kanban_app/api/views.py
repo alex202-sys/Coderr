@@ -2,6 +2,7 @@ from rest_framework import viewsets, filters, status, mixins
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.exceptions import ValidationError
 
 # from rest_framework.decorators import action
 from django.contrib.auth.models import User
@@ -22,6 +23,7 @@ from kanban_app.api.serializers import (
     OrdersCountSerializer,
     OrdersOfferSerializer,
     ReviewSerializer,
+    OfferQueryParametersSerializer,
 )
 from kanban_app.models import Offer, OfferDetail, Order, Review
 
@@ -32,8 +34,28 @@ class OfferDetailViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
 
 class OfferCustomPagination(PageNumberPagination):
+    """Custom pagination class for the OfferViewSet.
+    Allows clients to specify the number of items
+    per page using the 'page_size' query parameter"""
+
     page_size_query_param = "page_size"
     max_page_size = 30
+
+    def get_page_size(self, request):
+        """validies the page_size query parameter to ensure it's a valid integer.
+        If the parameter is invalid, a ValidationError is raised."""
+        page_size_param = request.query_params.get(self.page_size_query_param)
+        if page_size_param:
+            try:
+                return int(page_size_param)
+            except ValueError:
+                raise ValidationError(
+                    {
+                        self.page_size_query_param: "This parameter must be a valid integer.."
+                    }
+                )
+
+        return super().get_page_size(request)
 
 
 class OfferViewSet(viewsets.ModelViewSet):
@@ -71,45 +93,67 @@ class OfferViewSet(viewsets.ModelViewSet):
         return None
 
     def get_permissions(self):
-        print("get_permissions self.action: ", self.action)
         if self.action == "list" or self.action == "create":
             return [IsBusinessUserOrReadOnly()]
         elif self.action == "retrieve":
-            print("get_permissions retrieve")
             return [IsAuthenticated()]
-        # self.action == "retrieve" or self.action == "update"
-        # or self.action == "partial_update" or self.action == "destroy"
         return [OfferIdViewSetIsOwnerOrReadOnly()]
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        if self.action == "list" or self.action == "create":
+        if self.action in ["list", "create"]:
             # if 1 == 1:
-            print("OfferViewSet get_queryset queryset", queryset)
-            params = self.request.query_params
-            print("OfferViewSet get_queryset params:", params)
+            # params = self.request.query_params
 
-            # 1. Filtern nach Schöpfer/Ersteller (?creator_id=...)
-            creator_id = params.get("creator_id")
+            query_serializer = OfferQueryParametersSerializer(
+                data=self.request.query_params
+            )
+            # 2. Validieren! Wenn z.B. max_delivery_time="test" ist,
+            # bricht DRF hier SOFORT ab und sendet Status 400 an das Frontend.
+            query_serializer.is_valid(raise_exception=True)
+            validated_params = query_serializer.validated_data
+
+            creator_id = validated_params.get("creator_id")
             if creator_id:
                 queryset = queryset.filter(user_id=creator_id)
 
-            # 2. Filtern nach Mindestpreis (?min_price=...)
-            min_price = params.get("min_price")
+            min_price = validated_params.get("min_price")
             if min_price:
-                print("min_price: ", min_price)
                 queryset = queryset.filter(details__price__lte=min_price)
-                # queryset = queryset.filter(details__price__gte=min_price).distinct()
 
-            # 3. Filtern nach maximaler Lieferzeit (?max_delivery_time=...)
-            max_delivery_time = params.get("max_delivery_time")
+            max_delivery_time = validated_params.get("max_delivery_time")
             if max_delivery_time:
                 queryset = queryset.filter(
                     details__delivery_time_in_days__lte=max_delivery_time
                 )
+            queryset = queryset.distinct()
 
+            # try:
+            #     # 1. Filtern nach Schöpfer/Ersteller (?creator_id=...)
+            #     creator_id = params.get("creator_id")
+            #     if creator_id:
+            #         queryset = queryset.filter(user_id=creator_id)
+
+            #     # 2. Filtern nach Mindestpreis (?min_price=...)
+            #     min_price = params.get("min_price")
+            #     if min_price:
+            #         queryset = queryset.filter(details__price__lte=min_price)
+            #         # queryset = queryset.filter(details__price__gte=min_price).distinct()
+
+            #     # 3. Filtern nach maximaler Lieferzeit (?max_delivery_time=...)
+            #     max_delivery_time = params.get("max_delivery_time")
+            #     print("OfferViewSet von requestmax_delivery_time: ", max_delivery_time)
+            #     if max_delivery_time:
+            #         queryset = queryset.filter(
+            #             details__delivery_time_in_days__lte=max_delivery_time
+            #         )
+            # except ValueError:
+            #     raise ValidationError({"parameters": "Invalid request parameters."})
+
+            # # Duplikate durch JOINs entfernen
+            # queryset = queryset.distinct()
             # 4. Manuelle Sortierung (?ordering=...)
-            ordering = params.get("ordering")
+            ordering = validated_params.get("ordering")
             if ordering == "min_price":
                 queryset = queryset.annotate(
                     lowest_price=Min("details__price")
@@ -122,6 +166,9 @@ class OfferViewSet(viewsets.ModelViewSet):
                 queryset = queryset.order_by("updated_at")
             elif ordering == "-updated_at":
                 queryset = queryset.order_by("-updated_at")
+            else:
+                # Falls kein Ordering-Parameter übergeben wurde, zwingend nach ID sortieren!
+                queryset = queryset.order_by("id")
 
         return queryset
 
