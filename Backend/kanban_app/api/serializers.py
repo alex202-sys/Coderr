@@ -336,22 +336,22 @@ class ReviewSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "updated_at", "reviewer"]
 
-    # def validate(self, attrs):
-    #     request = self.context.get("request")
-    #     if request and request.method == "POST":
-    #         reviewer = request.user
-    #         business_user = attrs.get("business_user")
+    def validate(self, attrs):
+        request = self.context.get("request")
+        if request and request.method == "POST":
+            reviewer = request.user
+            business_user = attrs.get("business_user")
 
-    #         # Validierung: Ein Benutzer kann pro Geschäftsprofil nur eine Bewertung abgeben
-    #         if Review.objects.filter(
-    #             business_user=business_user, reviewer=reviewer
-    #         ).exists():
-    #             raise serializers.ValidationError(
-    #                 {
-    #                     "detail": "You have already submitted a review for this business user."
-    #                 }
-    #             )
-    #     return attrs
+            # Validierung: Ein Benutzer kann pro Geschäftsprofil nur eine Bewertung abgeben
+            if Review.objects.filter(
+                business_user=business_user, reviewer=reviewer
+            ).exists():
+                raise serializers.ValidationError(
+                    {
+                        "detail": "You have already submitted a review for this business user."
+                    }
+                )
+        return attrs
 
 
 class BaseInfoSerializer(serializers.Serializer):

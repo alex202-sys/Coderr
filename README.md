@@ -43,7 +43,7 @@ Coderr/
 │   │   └── urls.py
 │   ├── manage.py
 │   └── requirements.txt
-└── Frontend/ # The project consists only of the backend API component only, without a frontend.
+└── Frontend/ # The project consists of the backend API component only, without a frontend.
 ```
 
 ## Main API Endpoints

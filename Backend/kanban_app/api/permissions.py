@@ -135,14 +135,14 @@ class IsOwnerCustomerOrReadOnly(permissions.BasePermission):
                     detail="403: Forbidden. Only users with a customer profile can create reviews.",
                 )
 
-            reviewer = request.user
-            business_user_id = request.data.get("business_user")
-            if Review.objects.filter(
-                business_user=business_user_id, reviewer=reviewer
-            ).exists():
-                raise PermissionDenied(
-                    detail="403: Forbidden. A user can submit only one review per business profile.",
-                )
+            # reviewer = request.user
+            # business_user_id = request.data.get("business_user")
+            # if Review.objects.filter(
+            #     business_user=business_user_id, reviewer=reviewer
+            # ).exists():
+            #     raise PermissionDenied(
+            #         detail="403: Forbidden. Only users with a customer profile can create reviews..",
+            #     )
 
         return True
 
