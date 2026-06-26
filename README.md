@@ -43,7 +43,7 @@ Coderr/
 │   │   └── urls.py
 │   ├── manage.py
 │   └── requirements.txt
-└── Frontend/
+└── Frontend/ # The project consists only of the backend API component only, without a frontend.
 ```
 
 ## Main API Endpoints
@@ -95,7 +95,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-he local service endpoint will spawn cleanly on http://127.0.0.1:8000/api/
+The local service endpoint will spawn cleanly on http://127.0.0.1:8000/api/
 
 
 
