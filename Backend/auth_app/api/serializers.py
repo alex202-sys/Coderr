@@ -1,9 +1,8 @@
-import re
 from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
 from rest_framework import serializers
 from auth_app.models import UserProfile
-
-from rest_framework.authtoken.models import Token
+import re
 
 
 class UserProfileGetListCustomerSerializer(serializers.ModelSerializer):
@@ -12,7 +11,6 @@ class UserProfileGetListCustomerSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     first_name = serializers.CharField(source="user.first_name", read_only=True)
     last_name = serializers.CharField(source="user.last_name", read_only=True)
-    # file = serializers.SerializerMethodField(default="")
 
     class Meta:
         model = UserProfile
@@ -40,7 +38,6 @@ class UserProfileGetListBusinessSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     first_name = serializers.CharField(source="user.first_name", read_only=True)
     last_name = serializers.CharField(source="user.last_name", read_only=True)
-    # file = serializers.SerializerMethodField(default="")
 
     class Meta:
         model = UserProfile
@@ -107,17 +104,16 @@ class UserProfileSerializerPatch(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
-        # 1. Die verschachtelten Daten für den User heraustrennen (falls vorhanden)
-        # Da wir 'source="user.username"' nutzen, liefert DRF uns hier ein Dictionary 'user'
-        # print("user: ", user)
+        """Extract the nested user data (if present). Since we are using
+        `source="user.username"`, DRF provides us with a `user` dictionary here."""
+
         user_data = validated_data.pop("user", None)
-        print("user_data: ", user_data)
-        # 2. Zuerst die normalen Felder des UserProfile updaten (z.B. location, tel, description)
+        # First, update the standard fields of the UserProfile (e.g., location, tel, description)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
 
-        # 3. Jetzt die Daten des verknüpften Standard-Users updaten
+        # Now update the data of the linked standard user.
         if user_data:
             user = instance.user
             if "email" in user_data:
@@ -143,7 +139,6 @@ class UserProfileSerializerGet(serializers.ModelSerializer):
     email = serializers.CharField(source="user.email", read_only=True)
     first_name = serializers.CharField(source="user.first_name", read_only=True)
     last_name = serializers.CharField(source="user.last_name", read_only=True)
-    # file = serializers.SerializerMethodField(default="")
 
     class Meta:
         model = UserProfile
@@ -171,12 +166,12 @@ class UserProfileSerializerGet(serializers.ModelSerializer):
             if "_" in user.username:
                 parts = user.username.split("_", 1)
             else:
-                # re.split sucht nach einem Großbuchstaben [A-Z]
-                # Die r'(?=[A-Z])' Syntax sorgt dafür, dass vor dem Buchstaben gesplittet wird,
-                # ohne den Großbuchstaben selbst zu löschen.
+                # re.split looks for an uppercase letter [A-Z]
+                # The r'(?=[A-Z])' syntax ensures the split occurs before the letter,
+                # without removing the uppercase letter itself.
                 split_parts = re.split(r"(?=[A-Z])", user.username, maxsplit=1)
 
-                # Falls ein Großbuchstabe gefunden wurde, haben wir 2 Teile
+                # If an uppercase letter is found, we have 2 parts
                 if len(split_parts) == 2:
                     parts = split_parts
 
@@ -187,39 +182,12 @@ class UserProfileSerializerGet(serializers.ModelSerializer):
                 user.last_name = parts[1].capitalize() if len(parts) > 1 else ""
             user.save()
 
-            # if user.username and "_" in user.username:
-            #     parts = user.username.split("_", 1)
-            # first_name = parts[0]
-            # last_name = parts[1] if len(parts) > 1 else ""
-
         data_inst = super().to_representation(instance)
         # 'file' fix "" if Null
         if data_inst.get("file") is None:
             data_inst["file"] = ""
 
         return data_inst
-
-    #         fullname = self.validated_data.pop("fullname", "")
-    #         parts = fullname.split(" ", 1)
-    #         first_name = parts[0]
-    #         last_name = parts[1] if len(parts) > 1 else ""
-    #         username = first_name or self.validated_data.get("username")
-
-    # user = User.objects.create_user(
-    #     username=username,
-    #     email=email,
-    #     password=password,
-    #     first_name=first_name,
-    #     last_name=last_name,
-    # )
-
-    # def get_fullname(self, obj):
-    #     """method field `fullname` that combines the first and last name of the
-    #     associated User model."""
-    #     first = obj.user.first_name
-    #     last = obj.user.last_name
-    #     name = f"{first} {last}".strip()
-    #     return name if name else obj.user.username
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -234,10 +202,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
     token = serializers.SerializerMethodField()
     type = serializers.CharField(default="customer")
 
-    # fullname = serializers.CharField(write_only=True)
-    # user_id = serializers.IntegerField(source="id", read_only=True)
-    # username = serializers.CharField(source="user.username")
-
     class Meta:
         model = UserProfile
         fields = [
@@ -247,26 +211,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
             "password",
             "repeated_password",
             "type",
-            # "user_id",
-            # 'file',
-            # "fullname",
-            # "first_name",
-            # "last_name",
-            # 'location',
-            # 'tel',
-            # 'description',
-            # 'working_hours',
-            # 'created_at'
         ]
-        # read_only_fields = ["user", "created_at"]
         extra_kwargs = {"password": {"write_only": True}, "email": {"required": True}}
-
-    # def get_fullname(self, obj):
-    #     """method field `fullname` that combines the first and last name of the
-    #     associated User model."""
-    #     first = obj.first_name
-    #     last = obj.last_name
-    #     return f"{first} {last}".strip() or obj.username
 
     def validate_email(self, value):
         """_check user with the same email"""
@@ -293,8 +239,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         print(validated_data)
         username = validated_data.get("username")
         email = validated_data.get("email")
-        # Benutzer erstellen und Passwort hashen
-        # ser = User.objects.create_user(**validated_data)
         parts = []
         if "_" in username:
             parts = username.split("_", 1)
@@ -305,11 +249,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         if parts:
             first_name = parts[0].capitalize()
             last_name = parts[1].capitalize() if len(parts) > 1 else ""
-            # user.save()
-
-        # first_name = parts[0]
-        # last_name = parts[1] if len(parts) > 1 else ""
-        # username = first_name or self.validated_data.get("username")
 
         user = User.objects.create_user(
             username=username,
@@ -319,43 +258,11 @@ class RegistrationSerializer(serializers.ModelSerializer):
             last_name=last_name,
         )
 
-        # user.set_password(password)
-        # user.save()
-
-        # Profil wird automatisch über ein Signal oder direkt hier erstellt
+        # Profile is created automatically via a signal or directly here
         UserProfile.objects.get_or_create(user=user, type=profile_type)
         return user
 
     def get_token(self, obj):
-        # ohne AbstractUser
-        token, _ = Token.objects.get_or_create(ser_id=obj.user_id)
-        # from django.apps import apps
-
-        # Holt das Token-Modell dynamisch zur Laufzeit, um den Import-Konflikt zu umgehen
-        # TokenModel = apps.get_model("authtoken", "Token")
-        # token, _ = TokenModel.objects.get_or_create(user_id=obj.id)
+        # without AbstractUser
+        token, _ = Token.objects.get_or_create(user_id=obj.user_id)
         return token.key
-
-    # def save(self, **kwargs):
-    #     try:
-    #         fullname = self.validated_data.pop("fullname", "")
-    #         parts = fullname.split(" ", 1)
-    #         first_name = parts[0]
-    #         last_name = parts[1] if len(parts) > 1 else ""
-    #         username = first_name or self.validated_data.get("username")
-
-    #         account = User(
-    #             email=self.validated_data["email"],
-    #             username=username,
-    #             first_name=first_name,
-    #             last_name=last_name,
-    #         )
-    #         account.set_password(self.validated_data["password"])
-    #         account.save()
-
-    #         UserProfile.objects.create(user=account)
-    #         return account
-    #    except Exception as e:
-    #         raise serializers.ValidationError(
-    #             {"server_error": f"Fatal error: {str(e)}"}
-    #         )

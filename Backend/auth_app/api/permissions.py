@@ -1,7 +1,5 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
-# from rest_framework.exceptions import PermissionDenied, NotFound
-
 
 class IsOwnerByUserProfile(BasePermission):
     """
@@ -23,16 +21,3 @@ class IsOwnerByUserProfile(BasePermission):
             return True
 
         return obj.user == user
-        #     else:
-        #         raise PermissionDenied(
-        #             detail="403: Forbidden. Only the owner of the board can delete it.",
-        #         )
-
-        # # all othe methods except DELETE: PATCH, PUT, GET, HEAD, OPTIONS
-        # if obj.owner == user or user in obj.member.all():
-        #     return True
-        # else:
-        #     raise PermissionDenied(
-        #         "403:     Forbidden. The user must be either the owner or a member of the board."
-        #     )
-        # return False
