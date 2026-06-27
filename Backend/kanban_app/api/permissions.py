@@ -1,6 +1,6 @@
-from rest_framework import permissions
 from rest_framework.permissions import BasePermission
 from rest_framework.exceptions import PermissionDenied
+from rest_framework import permissions
 from kanban_app.models import Review
 
 
@@ -48,6 +48,11 @@ class IsUserCustomerOrBusinnesOrAdmin(BasePermission):
     """
 
     def has_permission(self, request, view):
+        """GET This endpoint returns only orders associated with the
+        logged-in user, either as a customer or as a business partner.
+        user either as a customer or as a business partner.
+        POST/orders/  - now requires a customer profile"""
+
         if not (request.user and request.user.is_authenticated):
             return False
         if request.user.is_staff or request.user.is_superuser:
@@ -57,21 +62,6 @@ class IsUserCustomerOrBusinnesOrAdmin(BasePermission):
                 getattr(request.user, "profile", None)
                 and request.user.profile.type == "customer"
             )
-        # if request.method == "PATCH":
-        #     print(
-        #         "IsUserCustomerOrBusinnesOrAdmin has_permission PATCH request.user: ",
-        #         request.user,
-        #     )
-        #     print(
-        #         "IsUserCustomerOrBusinnesOrAdmin has_permission PATCH request.user.profile.type: ",
-        #         request.user.profile.type,
-        #     )
-        #     return (
-        #         getattr(request.user, "profile", None)
-        #         and request.user.profile.type == "business"
-        #     )
-        # if request.method == "DELETE":
-        #     return request.user.is_staff or request.user.is_superuser
 
         if request.method in ["GET", "HEAD", "OPTIONS", "PATCH"]:
 
@@ -83,29 +73,18 @@ class IsUserCustomerOrBusinnesOrAdmin(BasePermission):
         return False
 
     def has_object_permission(self, request, view, obj):
-        # print(
-        #     "IsUserCustomerOrBusinnesOrAdmin has_object_permission request.method: ",
-        #     request.method,
-        # )
+        """PATCH /orders/{id}/ now requires the related business user
+        DELETE /orders/{id}/ now requires admin/staff"""
 
         if request.method == "DELETE" and (
             request.user.is_staff or request.user.is_superuser
         ):
             return True
         elif request.method == "PATCH":
-            # print("PATCH request")
             if (
                 getattr(request.user, "profile", None)
                 and request.user.profile.type == "business"
             ):
-                # print(
-                #     "IsUserCustomerOrBusinnesOrAdmin getattr: ",
-                #     getattr(request.user, "profile", None),
-                # )
-                # print(
-                #     "IsUserCustomerOrBusinnesOrAdmin has_object_permission PATCH request.user.profile.type : ",
-                #     request.user.profile.type,
-                # )
                 return True
         return False
 
@@ -134,16 +113,6 @@ class IsOwnerCustomerOrReadOnly(permissions.BasePermission):
                 raise PermissionDenied(
                     detail="403: Forbidden. Only users with a customer profile can create reviews.",
                 )
-
-            # reviewer = request.user
-            # business_user_id = request.data.get("business_user")
-            # if Review.objects.filter(
-            #     business_user=business_user_id, reviewer=reviewer
-            # ).exists():
-            #     raise PermissionDenied(
-            #         detail="403: Forbidden. Only users with a customer profile can create reviews..",
-            #     )
-
         return True
 
     def has_object_permission(self, request, view, obj):
