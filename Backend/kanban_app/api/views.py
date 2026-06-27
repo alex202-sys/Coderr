@@ -1,14 +1,13 @@
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
+from django.db.models import Min
+from django.db.models import Q
 from rest_framework import viewsets, filters, status, mixins
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import ValidationError
-
-# from rest_framework.decorators import action
-from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404
-from django.db.models import Min
-from django.db.models import Q
+from kanban_app.models import Offer, OfferDetail, Order, Review
 from .permissions import (
     IsBusinessUserOrReadOnly,
     OfferIdViewSetIsOwnerOrReadOnly,
@@ -25,10 +24,11 @@ from kanban_app.api.serializers import (
     ReviewSerializer,
     OfferQueryParametersSerializer,
 )
-from kanban_app.models import Offer, OfferDetail, Order, Review
 
 
 class OfferDetailViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    """ViewSet for retrieving OfferDetail objects."""
+
     queryset = OfferDetail.objects.all()
     serializer_class = OfferDetailSerializer
 
@@ -59,19 +59,20 @@ class OfferCustomPagination(PageNumberPagination):
 
 
 class OfferViewSet(viewsets.ModelViewSet):
-    """/api/offers/
+    """
+    /api/offers/
     GET - Query Parameters: creator_id, min_price, max_delivery_time, ordering
         search, page_size. No Permissions required.
     POST- An Offer must contain three OfferDetail.
         Only users of type 'business' are allowed to create offers.
     """
 
+    # Simultaneously with Object Offer, DRF takes linked object details and user
     queryset = (
         Offer.objects.all()
         .prefetch_related("details", "user")
         .select_related("user__profile")
     )
-
     pagination_class = OfferCustomPagination
 
     filter_backends = [filters.SearchFilter]
@@ -87,7 +88,6 @@ class OfferViewSet(viewsets.ModelViewSet):
             return OfferIdSerializer
 
         if self.action == "list" or self.action == "create":
-            # context["request"] = self.request
             return OfferSerializer
 
         return None
@@ -102,14 +102,12 @@ class OfferViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         if self.action in ["list", "create"]:
-            # if 1 == 1:
-            # params = self.request.query_params
 
             query_serializer = OfferQueryParametersSerializer(
                 data=self.request.query_params
             )
-            # 2. Validieren! Wenn z.B. max_delivery_time="test" ist,
-            # bricht DRF hier SOFORT ab und sendet Status 400 an das Frontend.
+            # 2. Validate! If, for example, max_delivery_time="test",
+            # DRF aborts IMMEDIATELY here and sends a 400 status to the frontend.
             query_serializer.is_valid(raise_exception=True)
             validated_params = query_serializer.validated_data
 
@@ -128,31 +126,6 @@ class OfferViewSet(viewsets.ModelViewSet):
                 )
             queryset = queryset.distinct()
 
-            # try:
-            #     # 1. Filtern nach Schöpfer/Ersteller (?creator_id=...)
-            #     creator_id = params.get("creator_id")
-            #     if creator_id:
-            #         queryset = queryset.filter(user_id=creator_id)
-
-            #     # 2. Filtern nach Mindestpreis (?min_price=...)
-            #     min_price = params.get("min_price")
-            #     if min_price:
-            #         queryset = queryset.filter(details__price__lte=min_price)
-            #         # queryset = queryset.filter(details__price__gte=min_price).distinct()
-
-            #     # 3. Filtern nach maximaler Lieferzeit (?max_delivery_time=...)
-            #     max_delivery_time = params.get("max_delivery_time")
-            #     print("OfferViewSet von requestmax_delivery_time: ", max_delivery_time)
-            #     if max_delivery_time:
-            #         queryset = queryset.filter(
-            #             details__delivery_time_in_days__lte=max_delivery_time
-            #         )
-            # except ValueError:
-            #     raise ValidationError({"parameters": "Invalid request parameters."})
-
-            # # Duplikate durch JOINs entfernen
-            # queryset = queryset.distinct()
-            # 4. Manuelle Sortierung (?ordering=...)
             ordering = validated_params.get("ordering")
             if ordering == "min_price":
                 queryset = queryset.annotate(
@@ -167,7 +140,6 @@ class OfferViewSet(viewsets.ModelViewSet):
             elif ordering == "-updated_at":
                 queryset = queryset.order_by("-updated_at")
             else:
-                # Falls kein Ordering-Parameter übergeben wurde, zwingend nach ID sortieren!
                 queryset = queryset.order_by("id")
 
         return queryset
@@ -183,11 +155,12 @@ class OfferViewSet(viewsets.ModelViewSet):
 
 
 class OrdersOfferViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing orders on the platform."""
+
     queryset = Order.objects.all()
     serializer_class = OrdersOfferSerializer
     permission_classes = [IsUserCustomerOrBusinnesOrAdmin]
 
-    # KI falsch erstrelt
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
@@ -196,7 +169,6 @@ class OrdersOfferViewSet(viewsets.ModelViewSet):
         if user.is_staff or user.is_superuser:
             return queryset
         if self.action in ["list", "retrieve"]:
-            # print("OrdersOfferViewSet get_queryset user: ", user)
             return queryset.filter(
                 Q(customer_user=user) | Q(business_user=user)
             ).distinct()
@@ -204,54 +176,41 @@ class OrdersOfferViewSet(viewsets.ModelViewSet):
 
 
 class OrdersCountViewSet(viewsets.GenericViewSet):
-    # permission_classes = [IsAuthenticated]
+    """ViewSet for counting orders based on their status.
+    GET - Returns the count of orders for a specific business user.
+    """
+
     queryset = Order.objects.all()
     serializer_class = OrdersCountSerializer
 
     def get_queryset(self, pk=None):
         queryset = super().get_queryset()
         pk = self.kwargs.get("pk")
-        # print("OrdersCountViewSet get_queryset pk: ", pk)
-        # print("OrdersCountViewSet get_queryset action: ", self.action)
         if self.action == "retrieve":
-            # business_user_id = self.request.query_params.get("business_user_id")
-            business_user = get_object_or_404(
-                User, id=pk
-            )  # Import aus django.shortcuts
-            # if business_user_id:
-            # print("OrdersCountViewSet get_queryset business_user: ", business_user)
+            business_user = get_object_or_404(User, id=pk)
             queryset = queryset.filter(
                 business_user=business_user, status="in_progress"
             )
-            # print("OrdersCountViewSet get_queryset queryset: ", queryset)
             return queryset
         return queryset.none()
 
     def retrieve(self, request, pk=None):
-        # business_user = get_object_or_404(User, id=pk)  # Import aus django.shortcuts
-        # business_user_id = self.request.query_params.get("business_user_id")
         business_user = get_object_or_404(User, id=pk)
-        # print("OrdersCountViewSet retrieve business_user: ", business_user)
-        # print("OrdersCountViewSet retrieve business_user: ", business_user)
-        # status_filter = "in_progress"
         queryset = self.get_queryset()
         orders_count = queryset.count()
         serializer = self.get_serializer({"order_count": orders_count})
-        # print("OrdersCountViewSet get_count serializer.data: ", serializer.data)
         return Response(serializer.data)
 
 
 class OrdersCompletedCountViewSet(viewsets.ViewSet):
-    # permission_classes = [IsAuthenticated]
+    """ViewSet for counting completed orders for a specific business user.
+    GET - Returns the count of completed orders for a specific business user.
+    """
 
     def retrieve(self, request, pk=None):
         queryset = Order.objects.all()
         business_user = get_object_or_404(User, id=pk)  # Import aus django.shortcuts
         queryset = queryset.filter(business_user=business_user, status="completed")
-        # status_filter = "completed"
-        # serializer = OrdersCountSerializer(
-        #     business_user, context={"status_filter": status_filter}
-        # )
         data = {"order_count": queryset.count()}
         serializer = OrdersCountSerializer(data)
 
@@ -276,17 +235,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-
-        self.get_serializer_context()[
-            "request"
-        ] = self.request  # Kontext für den Serializer setzen
+        # Set context for the serializer
+        self.get_serializer_context()["request"] = self.request
         serializer.save(reviewer=user)
 
     def get_queryset(self):
         queryset = super().get_queryset()
         if self.action == "list":
-            # Optional: Filtere Bewertungen basierend auf Query-Parametern (z.B. business_user_id)
-            # business_user_id = self.request.query_params.get("business_user_id")
             params = self.request.query_params
             business_user_id = params.get("business_user_id")
             if business_user_id:

@@ -1,8 +1,7 @@
-from django.contrib.auth import models
 from django.core.validators import MinValueValidator
+from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.exceptions import NotFound, ValidationError
-from django.contrib.auth.models import User
 from kanban_app.models import Offer, OfferDetail, Order, Review
 
 
