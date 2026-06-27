@@ -7,6 +7,8 @@ from rest_framework.test import APITestCase
 from auth_app.models import UserProfile
 from kanban_app.models import Offer, OfferDetail
 
+"""Integration tests for the offer endpoints under /api/offers/."""
+
 
 class OfferApiTests(APITestCase):
     """Integration tests for the offer endpoints under /api/offers/."""

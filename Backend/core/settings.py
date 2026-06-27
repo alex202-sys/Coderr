@@ -126,13 +126,9 @@ STATIC_URL = "static/"
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
-        #'rest_framework.permissions.AllowAny',
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",  # Für Angular und API
-        "rest_framework.authentication.SessionAuthentication",  # Für die Web-Ansicht
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",  # Web-Login
     ],
 }
-
-# AUTH_USER_MODEL = "auth_app.UserProfile"
-# AUTH_USER_MODEL = "auth_app.CustomUser"
