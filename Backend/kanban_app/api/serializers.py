@@ -24,9 +24,6 @@ class OfferDetailSerializer(serializers.ModelSerializer):
     """Serializer for creating/updating OfferDetail objects,
     used in PUT/PATCH requests of OfferSerializer."""
 
-    # für update nur probiere
-    # offer_type = serializers.CharField(required=True)
-
     class Meta:
         model = OfferDetail
         fields = [
@@ -82,31 +79,20 @@ class OfferIdSerializer(serializers.ModelSerializer):
         times = [detail.delivery_time_in_days for detail in obj.details.all()]
         return min(times) if times else 0
 
-    # def to_representation(self, instance):
-    #     return super().to_representation(instance)
-
     def update(self, instance, validated_data):
         """Retrieve the existing detail for this offer based on the `offer_type`
         (i.e., fetch the object from the `OfferDetail` model via the
         `Offer.details.offer_type` field)."""
-        # Update the main offer fields (e.g., title, description, image)
         details_data = validated_data.pop("details", None)
-        instance.title = validated_data.get("title", instance.title)
-        instance.save()
 
-        # Update nested details if they are included in the request.
         if details_data is not None:
             # if object OfferDetail more than 1 in request "details"
             # for detail_data in details_data:
             detail_data = details_data[0]
             offer_type = detail_data.get("offer_type")
 
-            if offer_type:
-                # Suchen des existierenden Details dieses Offers anhand des offer_type
-                # Retrieve the object from the OfferDetail model via the
-                #  Offer.details.offer_type field.
+            try:
                 detail_instance = instance.details.get(offer_type=offer_type)
-
                 # Update individual fields of the detail
                 detail_instance.title = detail_data.get("title", detail_instance.title)
                 detail_instance.revisions = detail_data.get(
@@ -121,12 +107,12 @@ class OfferIdSerializer(serializers.ModelSerializer):
                     "features", detail_instance.features
                 )
                 detail_instance.save()
+                # Update the Offer instance fields if provided
+                instance.title = validated_data.get("title", instance.title)
+                instance.save()
 
-            else:
-                raise ValidationError(
-                    "No offer_type provided in the request data for updating OfferDetail."
-                )
-
+            except OfferDetail.DoesNotExist:
+                raise ValidationError("Invalid request data or incomplete details.")
         return instance
 
     def to_representation(self, instance):
@@ -139,24 +125,27 @@ class OfferIdSerializer(serializers.ModelSerializer):
             ret.pop("updated_at")
             ret.pop("min_price")
             ret.pop("min_delivery_time")
-
             actual_details = instance.details.all()
             full_details_serializer = OfferDetailSerializer(
                 actual_details, many=True, context=self.context
             )
             ret["details"] = full_details_serializer.data
-
         return ret
 
 
 class UserMinDetailsSerializer(serializers.ModelSerializer):
+    """Serializer for providing minimal user details, used in OfferSerializer."""
+
     class Meta:
         model = User
         fields = ["first_name", "last_name", "username"]
 
 
 class OfferQueryParametersSerializer(serializers.Serializer):
-    # creator_id = serializers.IntegerField(required=False)
+    """Serializer for validating query parameters in GET requests for offers.
+    This serializer ensures that the provided query parameters are of the
+    expected types and formats."""
+
     creator_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), required=False
     )
@@ -178,6 +167,12 @@ class OfferQueryParametersSerializer(serializers.Serializer):
 
 
 class OfferSerializer(serializers.ModelSerializer):
+    """Serializer for creating, updating, and retrieving Offer objects.
+    This serializer handles the nested creation of OfferDetail objects and
+    provides methods to calculate the minimum price and delivery time across
+    all associated OfferDetail objects. It also includes user details
+    for the creator of the offer."""
+
     details = OfferDetailSerializer(many=True)
     min_price = serializers.SerializerMethodField()
     min_delivery_time = serializers.SerializerMethodField()
@@ -232,17 +227,17 @@ class OfferSerializer(serializers.ModelSerializer):
         return offer
 
     def to_representation(self, instance):
+        """Customize the representation of the Offer object based on the request method.
+        For GET requests, it provides a summary view with only the ID and URL of each OfferDetail.
+        For POST requests, it provides the full details of each OfferDetail."""
         request = self.context.get("request")
 
-        # Nutzen Sie den GET-spezifischen Aufbau, wenn es ein Listen-/Detail-Abruf ist
         if request and request.method == "GET":
             data = super().to_representation(instance)
-            # Überschreibt die vollständigen Details mit der ID- und URL-Übersicht
             data["details"] = OfferDetailUrlSerializer(
                 instance.details.all(), many=True
             ).data
 
-            # Null-Werte zu leeren Strings konvertieren
             if data.get("image") is None:
                 data["image"] = None
             return data
@@ -251,7 +246,6 @@ class OfferSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         if data.get("image") is None:
             data["image"] = None
-
         data.pop("user", None)
         data.pop("created_at", None)
         data.pop("updated_at", None)
@@ -259,6 +253,8 @@ class OfferSerializer(serializers.ModelSerializer):
 
 
 class OrdersOfferSerializer(serializers.ModelSerializer):
+    """Serializer for creating and retrieving Order objects.
+    This serializer includes fields for the associated OfferDetail,"""
 
     offer_detail_id = serializers.IntegerField(write_only=True)
 
@@ -279,7 +275,6 @@ class OrdersOfferSerializer(serializers.ModelSerializer):
             "updated_at",
             "offer_detail_id",
         ]
-        # write_only_fields = ["offer_detail_id"]
         read_only_fields = [
             "title",
             "revisions",
@@ -289,25 +284,13 @@ class OrdersOfferSerializer(serializers.ModelSerializer):
             "offer_type",
             "customer_user",
             "business_user",
-            # "created_at",
-            # "updated_at",
         ]
 
-    # def get_offer_detail_id(self, obj):
-    #     if obj.offer_detail:
-    #         return obj.offer_detail.id
-    #     return None
-
     def create(self, validated_data):
-        # offer_detail_id = self.context["request"].data.get("offer_detail_id")
         offer_detail_id = validated_data.pop("offer_detail_id")
         try:
             offerdetail = OfferDetail.objects.get(id=offer_detail_id)
-
         except OfferDetail.DoesNotExist:
-            # raise serializers.ValidationError(
-            #     "OfferDetail with the given ID does not exist."
-            # ) # KI geändert
             raise NotFound("OfferDetail with the given ID does not exist.")
 
         request = self.context.get("request")
@@ -321,7 +304,6 @@ class OrdersOfferSerializer(serializers.ModelSerializer):
         validated_data["price"] = offerdetail.price
         validated_data["features"] = offerdetail.features
         validated_data["offer_type"] = offerdetail.offer_type
-        # validated_data["status"] = Order.OrderStatus.in_progress
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
@@ -332,19 +314,18 @@ class OrdersOfferSerializer(serializers.ModelSerializer):
 
 
 class OrdersCountSerializer(serializers.Serializer):
-    """Serializer for counting or completed orders for a specific business user,
-    filtered by status."""
+    """Serializer for counting orders based on their status.
+    This serializer provides a read-only field that returns the count of orders"""
 
-    # order_count = serializers.SerializerMethodField(read_only=True, default=0)
     order_count = serializers.IntegerField(read_only=True, default=0)
-
-    # def get_order_count(self, obj):
-    #     status_filter = self.context.get("status_filter", None)
-
-    #     return Order.objects.filter(business_user=obj, status=status_filter).count()
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    """Serializer for creating and retrieving Review objects.
+    This serializer includes fields for the associated business user,
+    reviewer, rating, and description. It also ensures that a user can
+    submit only one review per business profile."""
+
     reviewer = serializers.ReadOnlyField(source="reviewer.id")
 
     class Meta:
@@ -365,8 +346,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         if request and request.method == "POST":
             reviewer = request.user
             business_user = attrs.get("business_user")
-
-            # Validierung: Ein Benutzer kann pro Geschäftsprofil nur eine Bewertung abgeben
+            # Validation: A user can submit only one review per business profile.
             if Review.objects.filter(
                 business_user=business_user, reviewer=reviewer
             ).exists():
@@ -394,15 +374,14 @@ class BaseInfoSerializer(serializers.Serializer):
     offer_count = serializers.SerializerMethodField(read_only=True, default=0)
 
     def get_review_count(self, obj):
-        print("BaseInfoSerializer get_review_count called")  # Debug-Ausgabe
         count = Review.objects.count()
         return count
 
     def get_average_rating(self, obj):
         reviews = Review.objects.all()
         if reviews.exists():
-            rätings = reviews.values_list("rating", flat=True)
-            average = sum(rätings) / len(rätings) if rätings else 0
+            ratings = reviews.values_list("rating", flat=True)
+            average = sum(ratings) / len(ratings) if ratings else 0
             return round(average, 1)
         return 0
 
