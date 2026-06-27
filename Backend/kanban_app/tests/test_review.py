@@ -100,7 +100,7 @@ class ReviewApiTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_post_duplicate_review_for_same_business_returns_403(self):
+    def test_post_duplicate_review_for_same_business_returns_400(self):
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.customer_token.key}")
         payload = {
             "business_user": self.business_user.id,
@@ -110,7 +110,7 @@ class ReviewApiTests(TestCase):
 
         response = self.client.post(self.list_url, payload, format="json")
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_patch_review_by_owner_returns_200(self):
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.customer_token.key}")

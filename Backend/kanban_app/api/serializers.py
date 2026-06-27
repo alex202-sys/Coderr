@@ -83,7 +83,9 @@ class OfferIdSerializer(serializers.ModelSerializer):
         (i.e., fetch the object from the `OfferDetail` model via the
         `Offer.details.offer_type` field)."""
         details_data = validated_data.pop("details", None)
-
+        # Update the Offer instance fields if provided
+        instance.title = validated_data.get("title", instance.title)
+        instance.save()
         if details_data is not None:
             # if object OfferDetail more than 1 in request "details"
             # for detail_data in details_data:
@@ -106,9 +108,6 @@ class OfferIdSerializer(serializers.ModelSerializer):
                     "features", detail_instance.features
                 )
                 detail_instance.save()
-                # Update the Offer instance fields if provided
-                instance.title = validated_data.get("title", instance.title)
-                instance.save()
 
             except OfferDetail.DoesNotExist:
                 raise ValidationError("Invalid request data or incomplete details.")
