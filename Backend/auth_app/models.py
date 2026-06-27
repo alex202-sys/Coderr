@@ -27,12 +27,3 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"Profile of {self.user.username}"
-
-    # @property
-    # def fullname(self):
-    #     """Returns the full name of the user by combining the first and last name."""
-
-    #     return f"{self.user.first_name} {self.user.last_name}".strip()
-
-
-# Create your models here.

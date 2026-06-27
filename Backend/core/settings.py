@@ -15,7 +15,7 @@ MEDIA_URL = "/media/"
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-load_dotenv()  # Lädt Variablen aus .env
+load_dotenv()  # Load variables from .env
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY is not set in the environment variables.")
