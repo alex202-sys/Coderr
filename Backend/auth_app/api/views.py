@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
 from auth_app.models import UserProfile
 from .serializers import (
-    # UserProfileSerializerList,
     UserProfileSerializerGet,
     UserProfileSerializerPatch,
     RegistrationSerializer,
@@ -29,27 +28,12 @@ class UserBusinessList(generics.ListAPIView):
     serializer_class = UserProfileGetListBusinessSerializer
 
 
-# class UserProfileList(generics.ListCreateAPIView):
-#     """GET: List all user profiles. POST: Create a new user profile.
-#     Only admin users can create new profiles, while authenticated users
-#     can view the list of profiles."""
-
-#     queryset = UserProfile.objects.all()
-#     serializer_class = UserProfileSerializerList
-
-#     def get_permissions(self):
-#         if self.request.method in permissions.SAFE_METHODS:
-#             return [permissions.IsAuthenticated()]
-#         return [permissions.IsAdminUser()]
-
-
 class UserProfileDetail(generics.RetrieveUpdateAPIView):
     """GET: Retrieve a user profile by ID. Only authenticated users
     can access this endpoint.
        PUT/PATCH: Update a user profile, only owner can access this endpoint."""
 
     queryset = UserProfile.objects.all()
-    # serializer_class = UserProfileSerializerGet
     permission_classes = [IsOwnerByUserProfile]
 
     def get_serializer_class(self):
@@ -57,22 +41,6 @@ class UserProfileDetail(generics.RetrieveUpdateAPIView):
             # Logic for POST, PUT, PATCH, DELETE
             return UserProfileSerializerPatch
         return UserProfileSerializerGet
-        # return super().get_serializer_class()
-
-    # def get_permissions(self):
-    #     """for GET should user authenticated, for PATCH should owner by UserProfile"""
-    #     # if self.request.method not in permissions.SAFE_METHODS:
-    #     #     return [permissions.IsAuthenticated()]
-    #     return [IsOwnerByUserProfile]
-
-    # def check_object_permissions(self, request, obj):
-    #     """check if the user is the owner or a admin of profile."""
-    #     super().check_object_permissions(request, obj)
-
-    #     if not request.user.is_staff and obj.user != request.user:
-    #         self.permission_denied(
-    #             request, message="Only the owner or an admin may modify this profile."
-    #         )
 
 
 class RegistrationView(generics.CreateAPIView):
@@ -121,19 +89,8 @@ class UserLoginView(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
         """If the login credentials are invalid or if there is an error during the login
         process, an appropriate error  message is returned."""
-        # email = request.data.get("email")
-        # if email and not request.data.get("username"):
-        #     try:
-        #         user_obj = User.objects.get(email=email)
-        #         request.data["username"] = user_obj.username
-        #     except User.DoesNotExist:
-        #         return Response(
-        #             {"error": "User with same email does not match"},
-        #             status=status.HTTP_400_BAD_REQUEST,
-        #         )
-
         serializer = self.serializer_class(data=request.data)
-        # print("serializer: ", serializer)
+
         if serializer.is_valid():
             user = serializer.validated_data["user"]
             token, created = Token.objects.get_or_create(user=user)
