@@ -1,6 +1,6 @@
-from django.db import models
-from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import User
+from django.db import models
 
 
 class Offer(models.Model):
@@ -10,7 +10,6 @@ class Offer(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="offers")
     title = models.CharField(max_length=255)  # unique=True
-    # image = models.ImageField(upload_to="offers/", blank=True, null=True)
     image = models.FileField(upload_to="offers/", blank=True, null=True, default=None)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -35,9 +34,7 @@ class OfferDetail(models.Model):
     revisions = models.IntegerField()
     delivery_time_in_days = models.IntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    features = models.JSONField(
-        default=list
-    )  # Speichert die Liste von Strings (z.B. ["Logo Design", "Visitenkarte"])
+    features = models.JSONField(default=list)
     offer_type = models.CharField(
         max_length=10, choices=OfferType.choices, default=OfferType.BASIC
     )
@@ -47,6 +44,8 @@ class OfferDetail(models.Model):
 
 
 class Order(models.Model):
+    """An order is created when a customer purchases an offer from a business user.
+    It contains details about the offer, the customer, and the business user."""
 
     class OfferType(models.TextChoices):
         BASIC = "basic", "Basic"
@@ -57,7 +56,6 @@ class Order(models.Model):
         in_progress = "in_progress", "In Progress"
         completed = "completed", "Completed"
 
-    # offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="details")
     offer_detail = models.ForeignKey(
         OfferDetail, on_delete=models.SET_NULL, null=True, related_name="orders"
     )
@@ -71,9 +69,7 @@ class Order(models.Model):
     revisions = models.IntegerField()
     delivery_time_in_days = models.IntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    features = models.JSONField(
-        default=list
-    )  # Speichert die Liste von Strings (z.B. ["Logo Design", "Visitenkarte"])
+    features = models.JSONField(default=list)
     offer_type = models.CharField(
         max_length=10, choices=OfferType.choices, default=OfferType.BASIC
     )
@@ -88,6 +84,11 @@ class Order(models.Model):
 
 
 class Review(models.Model):
+    """A review is created by a customer for a business user after an order is completed.
+    It contains a rating, description, and references to the business user and the reviewer
+    who is the customer user. Each customer can only submit one review per business user.
+    """
+
     business_user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="received_reviews"
     )
@@ -102,7 +103,7 @@ class Review(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        # Verhindert, dass ein User mehrere Bewertungen für denselben Business-User abgibt
+        # Prevents a user from submitting multiple reviews for the same business user
         unique_together = ("business_user", "reviewer")
         ordering = ["-created_at"]
 
