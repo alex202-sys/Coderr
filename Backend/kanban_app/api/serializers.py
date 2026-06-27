@@ -1,4 +1,5 @@
 from django.contrib.auth import models
+from django.core.validators import MinValueValidator
 from rest_framework import serializers
 from rest_framework.exceptions import NotFound, ValidationError
 from django.contrib.auth.models import User
@@ -159,10 +160,20 @@ class OfferQueryParametersSerializer(serializers.Serializer):
     creator_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), required=False
     )
-    min_price = serializers.DecimalField(
-        max_digits=10, decimal_places=2, required=False
+    min_price = serializers.FloatField(
+        required=False,
+        validators=[
+            MinValueValidator(0.0, message="min_price must be a non-negative number.")
+        ],
     )
-    max_delivery_time = serializers.IntegerField(required=False)
+    max_delivery_time = serializers.IntegerField(
+        required=False,
+        validators=[
+            MinValueValidator(
+                0, message="max_delivery_time must be a non-negative number."
+            )
+        ],
+    )
     ordering = serializers.CharField(required=False)
 
 
