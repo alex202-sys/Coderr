@@ -131,4 +131,5 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",  # Web-Login
     ],
+    "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%SZ",
 }
