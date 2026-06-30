@@ -120,10 +120,14 @@ class OfferFilterAndOrderingTests(TestCase):
         )
 
     def test_filters_offers_by_min_price_query(self):
-        response = self.client.get(self.url, {"min_price": 100})
+        response = self.client.get(self.url, {"min_price": 135})
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual([item["id"] for item in response.data], [self.offer_alpha.id])
+
+        self.assertEqual(
+            [item["id"] for item in response.data],
+            [self.offer_beta.id, self.offer_gamma.id],
+        )
 
     def test_filters_offers_by_max_delivery_time(self):
         response = self.client.get(self.url, {"max_delivery_time": 4})
@@ -138,6 +142,17 @@ class OfferFilterAndOrderingTests(TestCase):
         self.assertEqual(
             [item["id"] for item in response.data],
             [self.offer_alpha.id, self.offer_beta.id, self.offer_gamma.id],
+        )
+
+    def test_orders_offers_by_min_price_and_max_delivery_timeascending(self):
+        response = self.client.get(
+            self.url,
+            {"min_price": 135, "max_delivery_time": 7, "ordering": "min_price"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [item["id"] for item in response.data],
+            [self.offer_beta.id],
         )
 
     def test_orders_offers_by_min_price_descending(self):

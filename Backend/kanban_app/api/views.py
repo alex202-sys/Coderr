@@ -100,7 +100,15 @@ class OfferViewSet(viewsets.ModelViewSet):
         return [OfferIdViewSetIsOwnerOrReadOnly()]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = (
+            super()
+            .get_queryset()
+            .annotate(
+                calc_min_price=Min("details__price"),
+                calc_max_delivery=Min("details__delivery_time_in_days"),
+            )
+        )
+
         if self.action in ["list", "create"]:
 
             query_serializer = OfferQueryParametersSerializer(
@@ -108,39 +116,38 @@ class OfferViewSet(viewsets.ModelViewSet):
             )
             # 2. Validate! If, for example, max_delivery_time="test",
             # DRF aborts IMMEDIATELY here and sends a 400 status to the frontend.
-            query_serializer.is_valid(raise_exception=True)
-            validated_params = query_serializer.validated_data
+            if query_serializer.is_valid(raise_exception=True):
+                validated_params = query_serializer.validated_data
 
-            creator_id = validated_params.get("creator_id")
-            if creator_id:
-                queryset = queryset.filter(user_id=creator_id)
+                creator_id = validated_params.get("creator_id")
+                if creator_id:
+                    queryset = queryset.filter(user_id=creator_id)
 
-            min_price = validated_params.get("min_price")
-            if min_price:
-                queryset = queryset.filter(details__price__lte=min_price)
+                min_price = validated_params.get("min_price")
+                if min_price is not None:
+                    queryset = queryset.filter(calc_min_price__gte=min_price).distinct()
 
-            max_delivery_time = validated_params.get("max_delivery_time")
-            if max_delivery_time:
-                queryset = queryset.filter(
-                    details__delivery_time_in_days__lte=max_delivery_time
-                )
-            queryset = queryset.distinct()
+                max_delivery_time = validated_params.get("max_delivery_time")
+                if max_delivery_time is not None:
+                    queryset = queryset.filter(
+                        calc_max_delivery__lte=max_delivery_time
+                    ).distinct()
 
-            ordering = validated_params.get("ordering")
-            if ordering == "min_price":
-                queryset = queryset.annotate(
-                    lowest_price=Min("details__price")
-                ).order_by("lowest_price")
-            elif ordering == "-min_price":
-                queryset = queryset.annotate(
-                    lowest_price=Min("details__price")
-                ).order_by("-lowest_price")
-            elif ordering == "updated_at":
-                queryset = queryset.order_by("updated_at")
-            elif ordering == "-updated_at":
-                queryset = queryset.order_by("-updated_at")
-            else:
-                queryset = queryset.order_by("id")
+                ordering = validated_params.get("ordering")
+                if ordering == "min_price":
+                    queryset = queryset.annotate(
+                        lowest_price=Min("details__price")
+                    ).order_by("lowest_price")
+                elif ordering == "-min_price":
+                    queryset = queryset.annotate(
+                        lowest_price=Min("details__price")
+                    ).order_by("-lowest_price")
+                elif ordering == "updated_at":
+                    queryset = queryset.order_by("updated_at")
+                elif ordering == "-updated_at":
+                    queryset = queryset.order_by("-updated_at")
+                else:
+                    queryset = queryset.order_by("id")
 
         return queryset
 
