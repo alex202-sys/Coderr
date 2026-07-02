@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import UserProfile
-from kanban_app.models import Offer, OfferDetail
+from kanban_app.models import Offer, OfferDetail, Order, Review
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from django.urls import reverse
@@ -74,3 +74,25 @@ class OfferDetailAdmin(admin.ModelAdmin):
 
     # Optional: Make the ID clickable to open the object
     list_display_links = ("id", "offer", "title")
+
+
+@admin.register(Order)
+class OrdersAdmin(admin.ModelAdmin):
+    """Admin view for Order."""
+
+    # 'id' is added here as the first column
+    list_display = ("id", "title", "customer_user", "business_user", "status")
+
+    # Optional: Make the ID clickable to open the object
+    list_display_links = ("id", "title", "customer_user", "business_user", "status")
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    """Admin view for Review."""
+
+    # 'id' is added here as the first column
+    list_display = ("id", "reviewer", "business_user", "description", "rating")
+
+    # Optional: Make the ID clickable to open the object
+    list_display_links = ("id", "reviewer", "business_user")
