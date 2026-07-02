@@ -38,16 +38,26 @@ class OfferCustomPagination(PageNumberPagination):
     Allows clients to specify the number of items
     per page using the 'page_size' query parameter"""
 
+    page_size = 6
     page_size_query_param = "page_size"
     max_page_size = 30
 
     def get_page_size(self, request):
-        """validies the page_size query parameter to ensure it's a valid integer.
-        If the parameter is invalid, a ValidationError is raised."""
+        """Override the default get_page_size method to handle the 'page_size' query parameter.
+        If the 'page_size' parameter is provided, it will be validated and used to determine
+        the number of items per page. If the parameter is not provided or is invalid,
+        the default page size will be used."""
         page_size_param = request.query_params.get(self.page_size_query_param)
+        print(f"Received page_size parameter: {page_size_param}")  # Debugging line
         if page_size_param:
             try:
-                return int(page_size_param)
+                page_size_val = int(page_size_param)
+                if page_size_val > self.max_page_size:
+                    return self.max_page_size
+                if page_size_val <= 0:
+                    return self.page_size
+
+                return page_size_val
             except ValueError:
                 raise ValidationError(
                     {
