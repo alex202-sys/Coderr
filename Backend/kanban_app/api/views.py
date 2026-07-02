@@ -48,7 +48,6 @@ class OfferCustomPagination(PageNumberPagination):
         the number of items per page. If the parameter is not provided or is invalid,
         the default page size will be used."""
         page_size_param = request.query_params.get(self.page_size_query_param)
-        print(f"Received page_size parameter: {page_size_param}")  # Debugging line
         if page_size_param:
             try:
                 page_size_val = int(page_size_param)

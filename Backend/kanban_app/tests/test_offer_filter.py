@@ -115,7 +115,7 @@ class OfferFilterAndOrderingTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            [item["id"] for item in response.data],
+            [item["id"] for item in response.data["results"]],
             [self.offer_alpha.id, self.offer_beta.id],
         )
 
@@ -125,7 +125,7 @@ class OfferFilterAndOrderingTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
-            [item["id"] for item in response.data],
+            [item["id"] for item in response.data["results"]],
             [self.offer_beta.id, self.offer_gamma.id],
         )
 
@@ -133,14 +133,16 @@ class OfferFilterAndOrderingTests(TestCase):
         response = self.client.get(self.url, {"max_delivery_time": 4})
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual([item["id"] for item in response.data], [self.offer_alpha.id])
+        self.assertEqual(
+            [item["id"] for item in response.data["results"]], [self.offer_alpha.id]
+        )
 
     def test_orders_offers_by_min_price_ascending(self):
         response = self.client.get(self.url, {"ordering": "min_price"})
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            [item["id"] for item in response.data],
+            [item["id"] for item in response.data["results"]],
             [self.offer_alpha.id, self.offer_beta.id, self.offer_gamma.id],
         )
 
@@ -151,7 +153,7 @@ class OfferFilterAndOrderingTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            [item["id"] for item in response.data],
+            [item["id"] for item in response.data["results"]],
             [self.offer_beta.id],
         )
 
@@ -160,7 +162,7 @@ class OfferFilterAndOrderingTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            [item["id"] for item in response.data],
+            [item["id"] for item in response.data["results"]],
             [self.offer_gamma.id, self.offer_beta.id, self.offer_alpha.id],
         )
 
@@ -169,7 +171,7 @@ class OfferFilterAndOrderingTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            [item["id"] for item in response.data],
+            [item["id"] for item in response.data["results"]],
             [self.offer_gamma.id, self.offer_beta.id, self.offer_alpha.id],
         )
 
@@ -177,7 +179,9 @@ class OfferFilterAndOrderingTests(TestCase):
         response = self.client.get(self.url, {"search": "startups"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual([item["id"] for item in response.data], [self.offer_beta.id])
+        self.assertEqual(
+            [item["id"] for item in response.data["results"]], [self.offer_beta.id]
+        )
 
     def test_supports_page_size_pagination_when_requested(self):
         response = self.client.get(self.url, {"page_size": 2})

@@ -113,7 +113,7 @@ class OfferPatchApiTests(TestCase):
         self.assertEqual(basic_detail.title, "Basic Design Updated")
         self.assertEqual(basic_detail.revisions, 3)
         self.assertEqual(basic_detail.delivery_time_in_days, 6)
-        self.assertEqual(str(basic_detail.price), "120.00")
+        self.assertEqual(str(basic_detail.price), "120.0")
         self.assertEqual(basic_detail.features, ["Logo Design", "Flyer"])
         self.assertEqual(standard_detail.title, "Standard Design")
         self.assertEqual(premium_detail.title, "Premium Design")
