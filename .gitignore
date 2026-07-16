@@ -158,6 +158,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+static/
 
 # Spyder project settings
 .spyderproject
@@ -256,19 +257,22 @@ yarn-error.log*
 *Project Coderr.md
 
 # --- Backend / Django (im Unterordner backend/) ---
-**/backend/__pycache__/
-**/backend/*.py[cod]
-**/backend/db.sqlite3
-**/backend/db.sqlite3-journal
-**/backend/local_settings.py
+**/Backend/__pycache__/
+**/Backend/*.py[cod]
+**/Backend/db.sqlite3
+**/Backend/db.sqlite3-journal
+**/Backend/local_settings.py
 
 # Virtuelle Umgebungen (Python)
-**/backend/env/
-**/backend/.venv/
-**/backend/venv/
-**/backend/ENV/
-**/backend/.env
+**/Backend/env/
+**/Backend/.venv/
+**/Backend/venv/
+**/Backend/ENV/
+**/Backend/.env
 
+# Static files
+**/static/
+**/Backend/static/
 # --- IDEs und Editoren ---
 .vscode/
 .idea/
