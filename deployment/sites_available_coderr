@@ -1,0 +1,23 @@
+server {
+    listen 80;
+    server_name liuhequan.org www.liuhequan.org;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 default_server ssl;
+    server_name liuhequan.org www.liuhequan.org 35.242.227.214;
+    ssl_certificate /etc/letsencrypt/live/liuhequan.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/liuhequan.org/privkey.pem;
+
+    location /static/ {
+    alias /home/aleksandr_ogloblin_job/projects/Coderr/Backend/static/;
+    expires 30d;
+    access_log off;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://127.0.0.1:8000;
+    }
+}
