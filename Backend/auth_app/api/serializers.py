@@ -90,7 +90,6 @@ class UserProfileSerializerPatch(serializers.ModelSerializer):
         read_only_fields = [
             "user",
             "username",
-            "file",
             "created_at",
             "uploaded_at",
             "type",

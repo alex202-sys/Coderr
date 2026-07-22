@@ -248,22 +248,24 @@ yarn-debug.log*
 yarn-error.log*
 
 # --- Backend (Django) ---
-# Spezifisch für den backend-Ordner
+# Speciel for backend
 # backend/env/
 # backend/db.sqlite3
 # **/__pycache__/
 # *.py[cod]
 # *.env
 *Project Coderr.md
+**/scripts/up.sh
+**/scripts/backup.sh
 
-# --- Backend / Django (im Unterordner backend/) ---
+# --- Backend / Django ---
 **/Backend/__pycache__/
 **/Backend/*.py[cod]
 **/Backend/db.sqlite3
 **/Backend/db.sqlite3-journal
 **/Backend/local_settings.py
 
-# Virtuelle Umgebungen (Python)
+# Virtuelle enviroment (Python)
 **/Backend/env/
 **/Backend/.venv/
 **/Backend/venv/
@@ -273,7 +275,7 @@ yarn-error.log*
 # Static files
 **/static/
 **/Backend/static/
-# --- IDEs und Editoren ---
+# --- IDEs and Editor ---
 .vscode/
 .idea/
 *.sublime-workspace

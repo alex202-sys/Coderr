@@ -89,58 +89,72 @@ def create_offer_with_details(user, title, description, details):
 
 print("\n--- Users ---")
 
-maxim = get_or_create_user(
-    username="maxim_mustermann",
-    email="maxim@business.de",
-    password="Test1234!",
-    first_name="Maxim",
-    last_name="Mustermann",
-)
 example1 = get_or_create_user(
-    username="exampleUsername1",
+    username="example_username1",
     email="example1@mail.de",
-    password="Test1234!",
+    password="pw123123",
     first_name="Example",
     last_name="Username1",
 )
+example2 = get_or_create_user(
+    username="example_username2",
+    email="example2@mail.de",
+    password="pw123123",
+    first_name="Example",
+    last_name="Username2",
+)
 example3 = get_or_create_user(
-    username="exampleUsername3",
+    username="example_username3",
     email="example3@mail.de",
-    password="Test1234!",
+    password="pw123123",
     first_name="Example",
     last_name="Username3",
 )
 example4 = get_or_create_user(
-    username="exampleUsername4",
+    username="example_username4",
     email="example4@mail.de",
-    password="Test1234!",
-)
-admin = get_or_create_user(
-    username="aleks",
-    email="aleks@gmail.de",
-    password="pw123",
-    is_superuser=True,
-    is_staff=True,
+    password="pw123123",
+    first_name="Example",
+    last_name="Username4",
+
 )
 example5 = get_or_create_user(
-    username="exampleUsername5",
+    username="example_username5",
     email="example5@mail.de",
-    password="Test1234!",
-    first_name="exampleUsername5",
+    password="pw123123",
+    first_name="Example",
     last_name="Username5",
 )
 example6 = get_or_create_user(
-    username="exampleUsername6",
+    username="example_username6",
     email="example6@mail.de",
-    password="Test1234!",
-    first_name="exampleUsername6",
+    password="pw123123",
+    first_name="Example",
+    last_name="Username6",
+
+)
+maxim = get_or_create_user(
+    username="maxim_mustermann",
+    email="maxim@business.de",
+    password="pw123123",
+    first_name="Maxim",
+    last_name="Mustermann",
 )
 maximm = get_or_create_user(
     username="maximm_username7",
     email="maximm@business.de",
-    password="Test1234!",
+    password="pw123123",
     first_name="MaximM",
     last_name="Username7",
+)
+admin = get_or_create_user(
+    username="aleks_coderr",
+    email="aleks@gmail.de",
+    password="pw123123",
+    first_name="Aleks",
+    last_name="Coderr",
+    is_superuser=True,
+    is_staff=True,
 )
 
 # ---------------------------------------------------------------------------
@@ -149,14 +163,17 @@ maximm = get_or_create_user(
 
 print("\n--- Profiles ---")
 
-get_or_create_profile(maxim,    "business", location="Berlinnn",  tel="9876543212",
-                      description="Updated business description1", working_hours="10-19")
 get_or_create_profile(example1, "customer")
+get_or_create_profile(example2, "customer")
 get_or_create_profile(example3, "customer")
 get_or_create_profile(example4, "customer")
 get_or_create_profile(example5, "business")
 get_or_create_profile(example6, "business")
+get_or_create_profile(maxim,    "business", location="Berlinnn",  tel="9876543212",
+                      description="Updated business description1", working_hours="10-19")
 get_or_create_profile(maximm,   "business", location="Berlinnn7", tel="98765432123",
+                      description="Updated business description1", working_hours="10-19")
+get_or_create_profile(admin,    "business", location="Berlinnn",  tel="9876543214",
                       description="Updated business description1", working_hours="10-19")
 
 # ---------------------------------------------------------------------------
@@ -194,7 +211,7 @@ STANDARD_DETAILS = [
 
 for i in range(2, 10):
     create_offer_with_details(
-        user=maximm,
+        user=maxim,
         title=f"Grafikdesign-Paket {i}",
         description=f"Ein umfassendes Grafikdesign-Paket für Unternehmen.{i}",
         details=STANDARD_DETAILS,

@@ -4,6 +4,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
 from auth_app.models import UserProfile
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .serializers import (
     UserProfileSerializerGet,
     UserProfileSerializerPatch,
@@ -35,6 +36,7 @@ class UserProfileDetail(generics.RetrieveUpdateAPIView):
 
     queryset = UserProfile.objects.all()
     permission_classes = [IsOwnerByUserProfile]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_serializer_class(self):
         if self.request.method not in permissions.SAFE_METHODS:

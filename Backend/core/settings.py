@@ -132,7 +132,16 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
-        "rest_framework.authentication.SessionAuthentication",  # Web-Login
+        # "rest_framework.authentication.SessionAuthentication",  # CSRF-Token - 403 CSRF Failed 
     ],
     "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%SZ",
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://liuhequan.org',
+    'https://www.liuhequan.org',
+]
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
