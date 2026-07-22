@@ -275,6 +275,7 @@ yarn-error.log*
 # Static files
 **/static/
 **/Backend/static/
+**/Backend/media/
 # --- IDEs and Editor ---
 .vscode/
 .idea/
