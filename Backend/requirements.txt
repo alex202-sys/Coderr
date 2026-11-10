@@ -2,6 +2,7 @@ Django>=5.0,<6.0
 djangorestframework
 django-cors-headers
 psycopg2-binary
+python-dotenv
 gunicorn
 requests==2.31.0
 PyJWT==2.7.0
