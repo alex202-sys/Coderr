@@ -76,6 +76,12 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
+warning! since the library `bcc==0.29.1` was excluded from `requirements.txt`—as it is now available globally on the system—please install it manually.
+```bash
+sudo apt update
+sudo apt install -y python3-bpfcc
+```
+
 Create `Backend\.env`:
 
 ```env
